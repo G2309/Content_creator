@@ -1,8 +1,3 @@
-/**
- * Cliente HTTP minimalista para hablar con la API.
- * Token se guarda en localStorage. Cualquier 401 dispara logout automático.
- */
-
 const TOKEN_KEY = "auth_token";
 
 export const tokenStore = {
@@ -60,7 +55,6 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
 }
 
 export const api = {
-  // Auth
   login: (email, password) =>
     request("/api/auth/login", {
       method: "POST",
@@ -74,7 +68,6 @@ export const api = {
       body: { current_password, new_password },
     }),
 
-  // Usuarios (solo admin)
   listUsers: () => request("/api/users"),
   createUser: (email, temporary_password, is_admin = false) =>
     request("/api/users", {
@@ -83,16 +76,13 @@ export const api = {
     }),
   deleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE" }),
 
-  // Catálogos
   getPains: () => request("/api/catalogs/pains"),
   getFormats: () => request("/api/catalogs/formats"),
 
-  // Contexto
   getContext: () => request("/api/context"),
   updateContext: (data) =>
     request("/api/context", { method: "PUT", body: data }),
 
-  // Generación
   generate: (payload) =>
     request("/api/content/generate", { method: "POST", body: payload }),
 };

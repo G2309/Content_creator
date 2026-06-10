@@ -1,13 +1,6 @@
-/* ============================================================
-   DESIGN TOKENS
-   ------------------------------------------------------------
-   Toda la paleta vive aquí. Cuando el cliente confirme colores,
-   solo cambia estas variables y todo el resto se actualiza.
-   La fundación actual es neutra (escala de grises cálida).
-   ============================================================ */
 
 :root {
-  /* — Colores (provisionales, fáciles de reemplazar) — */
+  /* — Colores — */
   --color-bg: #faf9f6;          /* fondo de página, off-white cálido */
   --color-surface: #ffffff;     /* tarjetas, paneles */
   --color-surface-2: #f3f1ec;   /* surfaces secundarios, hover sutil */
@@ -16,7 +9,7 @@
   --color-text: #1a1816;        /* texto principal */
   --color-text-muted: #6b665d;  /* texto secundario */
   --color-text-subtle: #948f84;
-  --color-accent: #1a1816;      /* acento por defecto = texto (cliente reemplaza) */
+  --color-accent: #1a1816;      /* acento por defecto */
   --color-accent-contrast: #faf9f6;
   --color-danger: #8b2c2c;
   --color-success: #2c5f3f;
@@ -57,10 +50,6 @@
   --t-fast: 120ms ease;
   --t-base: 180ms ease;
 }
-
-/* ============================================================
-   RESET MÍNIMO
-   ============================================================ */
 
 *,
 *::before,
@@ -137,10 +126,6 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* ============================================================
-   COMPONENTES REUTILIZABLES
-   ============================================================ */
 
 /* — Layout principal — */
 .app-shell {
@@ -354,7 +339,7 @@ a {
   line-height: 1.5;
 }
 
-/* — Pain & Format selectors (grid de chips) — */
+/* — Pain & Format selectors — */
 .option-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

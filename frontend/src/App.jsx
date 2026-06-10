@@ -7,17 +7,14 @@ import Settings from "./pages/Settings.jsx";
 import Users from "./pages/Users.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx";
 
-/** Solo permite entrar si hay usuario logueado. */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  // Si tiene contraseña temporal, lo mandamos al cambio forzado
   if (user.must_change_password) return <Navigate to="/cambiar-password" replace />;
   return children;
 }
 
-/** Solo accesible si el usuario está logueado Y tiene must_change_password=true. */
 function PasswordChangeRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -26,7 +23,6 @@ function PasswordChangeRoute({ children }) {
   return children;
 }
 
-/** Solo accesible si NO hay usuario logueado (página de login). */
 function PublicOnly({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -38,7 +34,6 @@ function PublicOnly({ children }) {
   return children;
 }
 
-/** Solo accesible para admins. */
 function AdminOnly({ children }) {
   const { user } = useAuth();
   if (!user?.is_admin) return <Navigate to="/" replace />;

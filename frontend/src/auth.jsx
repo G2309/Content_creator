@@ -27,7 +27,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     refresh();
 
-    // Logout automático cuando el cliente API detecta un 401
     const handleLogout = () => {
       setUser(null);
     };
