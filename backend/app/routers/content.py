@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user_active
 from app.models import BusinessContext, User
 from app.routers.catalogs import get_format_by_id, get_pain_by_id
 from app.schemas import GenerateRequest, GenerateResponse
@@ -31,7 +31,7 @@ def _get_context(db: Session, user: User) -> BusinessContext:
 def generate(
     payload: GenerateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_active),
 ) -> GenerateResponse:
     pain = get_pain_by_id(payload.pain_id)
     if not pain:

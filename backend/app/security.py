@@ -20,7 +20,6 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(subject: str | int) -> tuple[str, int]:
-    """Devuelve (token, expira_en_segundos)."""
     expires_delta = timedelta(minutes=settings.access_token_expire_minutes)
     expire = datetime.now(timezone.utc) + expires_delta
     payload: dict[str, Any] = {

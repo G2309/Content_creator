@@ -30,6 +30,8 @@ def seed_admin_user(db: Session) -> None:
         email=email,
         hashed_password=hash_password(password),
         is_active=True,
+        is_admin=True,            
+        must_change_password=False,  
     )
     db.add(user)
     db.flush()  

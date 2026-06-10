@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user_active
 from app.models import BusinessContext, User
 from app.schemas import BusinessContextPublic, BusinessContextUpdate
 
@@ -22,7 +22,7 @@ def _get_or_create(db: Session, user: User) -> BusinessContext:
 @router.get("", response_model=BusinessContextPublic)
 def read_context(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_active),
 ) -> BusinessContext:
     return _get_or_create(db, current_user)
 
@@ -31,7 +31,7 @@ def read_context(
 def update_context(
     payload: BusinessContextUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_active),
 ) -> BusinessContext:
     ctx = _get_or_create(db, current_user)
     for field, value in payload.model_dump().items():

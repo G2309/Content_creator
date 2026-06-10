@@ -12,7 +12,13 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"
-    expires_in: int  
+    expires_in: int  # segundos
+    must_change_password: bool = False
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=255)
+    new_password: str = Field(min_length=8, max_length=255)
 
 
 class UserPublic(BaseModel):
@@ -21,6 +27,25 @@ class UserPublic(BaseModel):
     id: int
     email: EmailStr
     is_active: bool
+    is_admin: bool
+    must_change_password: bool
+    created_at: datetime
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    temporary_password: str = Field(min_length=8, max_length=255)
+    is_admin: bool = False
+
+
+class UserListItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: EmailStr
+    is_active: bool
+    is_admin: bool
+    must_change_password: bool
     created_at: datetime
 
 

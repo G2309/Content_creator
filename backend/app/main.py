@@ -12,7 +12,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
 from app.database import Base, SessionLocal, engine
-from app.routers import auth, catalogs, content, context
+from app.migrations import ensure_schema
+from app.routers import auth, catalogs, content, context, users
 from app.seed import seed_admin_user
 
 logging.basicConfig(
@@ -28,6 +29,8 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
+    ensure_schema(engine, admin_email=settings.admin_email)
+
     with SessionLocal() as db:
         seed_admin_user(db)
 
@@ -38,7 +41,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.0.0",
+    version="1.1.0",
     docs_url="/api/docs" if settings.is_development else None,
     redoc_url=None,
     openapi_url="/api/openapi.json" if settings.is_development else None,
@@ -55,6 +58,7 @@ if settings.cors_origins_list:
     )
 
 app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(catalogs.router)
 app.include_router(content.router)
 app.include_router(context.router)
@@ -74,7 +78,6 @@ if STATIC_DIR.exists():
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def spa_fallback(full_path: str):
-        """Devuelve index.html para cualquier ruta no-API — soporta SPA routing."""
         if full_path.startswith("api"):
             return JSONResponse({"detail": "Not Found"}, status_code=404)
 

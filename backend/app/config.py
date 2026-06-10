@@ -18,8 +18,8 @@ class Settings(BaseSettings):
 
     database_url: str
 
-    secret_key: str  
-    access_token_expire_minutes: int = 60 * 24  
+    secret_key: str  # generar con: python -c "import secrets; print(secrets.token_urlsafe(64))"
+    access_token_expire_minutes: int = 60 * 24  # 24 horas
     jwt_algorithm: str = "HS256"
 
     admin_email: str
@@ -30,13 +30,14 @@ class Settings(BaseSettings):
     anthropic_max_tokens: int = 1024
     anthropic_timeout_seconds: float = 20.0
 
-    cors_origins: str = ""  
+    cors_origins: str = ""
 
-    port: int = 8000 
+    port: int = 8000
 
     @field_validator("database_url")
     @classmethod
     def normalize_database_url(cls, v: str) -> str:
+        """Railway/Heroku a veces entregan 'postgres://', pero SQLAlchemy v2 espera 'postgresql://'."""
         if v.startswith("postgres://"):
             v = v.replace("postgres://", "postgresql://", 1)
         if v.startswith("postgresql://") and "+psycopg" not in v:
@@ -56,4 +57,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()  
+    return Settings()  # type: ignore[call-arg]

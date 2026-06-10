@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.deps import get_current_user
+from app.deps import get_current_user_active
 from app.models import User
 from app.schemas import CatalogItem
 
@@ -65,12 +65,12 @@ FORMATS: list[CatalogItem] = [
 
 
 @router.get("/pains", response_model=list[CatalogItem])
-def get_pains(_: User = Depends(get_current_user)) -> list[CatalogItem]:
+def get_pains(_: User = Depends(get_current_user_active)) -> list[CatalogItem]:
     return PAINS
 
 
 @router.get("/formats", response_model=list[CatalogItem])
-def get_formats(_: User = Depends(get_current_user)) -> list[CatalogItem]:
+def get_formats(_: User = Depends(get_current_user_active)) -> list[CatalogItem]:
     return FORMATS
 
 
