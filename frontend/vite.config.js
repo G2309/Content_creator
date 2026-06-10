@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+// En desarrollo, Vite corre en :5173 y hace proxy a FastAPI en :8000.
+// En producción, FastAPI sirve el build estático — no se usa este proxy.
 export default defineConfig({
   plugins: [react()],
   server: {

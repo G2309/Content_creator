@@ -17,10 +17,17 @@ export default function Layout() {
             Generador
           </NavLink>
           <NavLink to="/ajustes">Contexto del negocio</NavLink>
+          <NavLink to="/cuenta/password">Cambiar contraseña</NavLink>
+          {user?.is_admin && <NavLink to="/usuarios">Usuarios</NavLink>}
         </nav>
 
         <div className="sidebar-footer">
-          {user && <span>{user.email}</span>}
+          {user && (
+            <span>
+              {user.email}
+              {user.is_admin && <span className="badge"> · admin</span>}
+            </span>
+          )}
           <button className="btn btn-ghost" onClick={logout}>
             Cerrar sesión
           </button>

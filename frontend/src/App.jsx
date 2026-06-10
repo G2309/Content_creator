@@ -4,18 +4,44 @@ import Layout from "./components/Layout.jsx";
 import Login from "./pages/Login.jsx";
 import Generator from "./pages/Generator.jsx";
 import Settings from "./pages/Settings.jsx";
+import Users from "./pages/Users.jsx";
+import ChangePassword from "./pages/ChangePassword.jsx";
 
+/** Solo permite entrar si hay usuario logueado. */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return null; 
+  if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
+  // Si tiene contraseña temporal, lo mandamos al cambio forzado
+  if (user.must_change_password) return <Navigate to="/cambiar-password" replace />;
   return children;
 }
 
+/** Solo accesible si el usuario está logueado Y tiene must_change_password=true. */
+function PasswordChangeRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!user.must_change_password) return <Navigate to="/" replace />;
+  return children;
+}
+
+/** Solo accesible si NO hay usuario logueado (página de login). */
 function PublicOnly({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    return user.must_change_password
+      ? <Navigate to="/cambiar-password" replace />
+      : <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+/** Solo accesible para admins. */
+function AdminOnly({ children }) {
+  const { user } = useAuth();
+  if (!user?.is_admin) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -31,6 +57,14 @@ export default function App() {
         }
       />
       <Route
+        path="/cambiar-password"
+        element={
+          <PasswordChangeRoute>
+            <ChangePassword forced />
+          </PasswordChangeRoute>
+        }
+      />
+      <Route
         path="/"
         element={
           <ProtectedRoute>
@@ -40,6 +74,15 @@ export default function App() {
       >
         <Route index element={<Generator />} />
         <Route path="ajustes" element={<Settings />} />
+        <Route path="cuenta/password" element={<ChangePassword />} />
+        <Route
+          path="usuarios"
+          element={
+            <AdminOnly>
+              <Users />
+            </AdminOnly>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
