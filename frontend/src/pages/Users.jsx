@@ -2,12 +2,17 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth.jsx";
 
+/**
+ * Página solo accesible para admins. Lista usuarios, permite crear nuevos con
+ * contraseña temporal (la app fuerza el cambio al primer login) y eliminarlos.
+ */
 export default function Users() {
   const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Form de creación
   const [email, setEmail] = useState("");
   const [tempPwd, setTempPwd] = useState("");
   const [isAdminFlag, setIsAdminFlag] = useState(false);
@@ -31,6 +36,7 @@ export default function Users() {
   }, []);
 
   const generateRandomPassword = () => {
+    // 16 caracteres alfanuméricos — suficientemente aleatorio para temporal
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
     const buf = new Uint32Array(16);
     crypto.getRandomValues(buf);
