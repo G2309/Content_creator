@@ -1,3 +1,4 @@
+"""Modelos de base de datos."""
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
@@ -14,6 +15,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # True cuando un admin creó la cuenta — al primer login se obliga a cambiar la contraseña
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -25,6 +27,10 @@ class User(Base):
 
 
 class BusinessContext(Base):
+    """Contexto del negocio que la IA usa como sistema base.
+
+    En Fase 1 se edita manualmente. En Fase 2 el scraper lo poblará desde una URL.
+    """
     __tablename__ = "business_contexts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)

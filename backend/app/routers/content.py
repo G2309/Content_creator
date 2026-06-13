@@ -1,3 +1,4 @@
+"""Endpoints de generación de contenido con IA."""
 import logging
 
 import anthropic
@@ -20,6 +21,7 @@ settings = get_settings()
 def _get_context(db: Session, user: User) -> BusinessContext:
     if user.business_context:
         return user.business_context
+    # Crear contexto vacío si nunca se configuró
     ctx = BusinessContext(user_id=user.id)
     db.add(ctx)
     db.commit()

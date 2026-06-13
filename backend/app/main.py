@@ -1,3 +1,7 @@
+"""Punto de entrada de FastAPI.
+
+Sirve la API bajo /api y los archivos estáticos del frontend React desde la raíz.
+"""
 from __future__ import annotations
 
 import logging
@@ -13,7 +17,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.config import get_settings
 from app.database import Base, SessionLocal, engine
 from app.migrations import ensure_schema
-from app.routers import auth, catalogs, content, context, users
+from app.routers import auth, catalogs, content, context, scraper, users
 from app.seed import seed_admin_user
 
 logging.basicConfig(
@@ -27,10 +31,13 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 1) Crear tablas si no existen (no toca tablas existentes)
     Base.metadata.create_all(bind=engine)
 
+    # 2) Aplicar migraciones de columnas nuevas (idempotente)
     ensure_schema(engine, admin_email=settings.admin_email)
 
+    # 3) Crear usuario admin inicial si no hay ninguno
     with SessionLocal() as db:
         seed_admin_user(db)
 
@@ -42,12 +49,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version="1.1.0",
+    # Ocultar docs en producción para reducir superficie de ataque
     docs_url="/api/docs" if settings.is_development else None,
     redoc_url=None,
     openapi_url="/api/openapi.json" if settings.is_development else None,
     lifespan=lifespan,
 )
 
+# CORS — solo si hay orígenes definidos (típicamente solo en desarrollo)
 if settings.cors_origins_list:
     app.add_middleware(
         CORSMiddleware,
@@ -57,11 +66,13 @@ if settings.cors_origins_list:
         allow_headers=["*"],
     )
 
+# Routers de la API
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(catalogs.router)
 app.include_router(content.router)
 app.include_router(context.router)
+app.include_router(scraper.router)
 
 
 @app.get("/api/health", tags=["health"])
@@ -69,6 +80,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+# ---------------------- Servir frontend React ----------------------
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 if STATIC_DIR.exists():

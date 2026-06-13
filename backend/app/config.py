@@ -1,3 +1,7 @@
+"""Configuración de la aplicación.
+
+Todas las variables sensibles se leen desde entorno. Nunca hardcodear secretos.
+"""
 from functools import lru_cache
 from typing import List
 
@@ -13,26 +17,34 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # --- Entorno ---
     app_env: str = "production"  # "development" | "production"
     app_name: str = "Generador de Contenido IA"
 
+    # --- Base de datos ---
+    # Railway entrega DATABASE_URL automáticamente al asociar un Postgres plugin.
     database_url: str
 
+    # --- Seguridad JWT ---
     secret_key: str  # generar con: python -c "import secrets; print(secrets.token_urlsafe(64))"
     access_token_expire_minutes: int = 60 * 24  # 24 horas
     jwt_algorithm: str = "HS256"
 
+    # --- Usuario admin inicial (se crea solo si no hay usuarios en la BD) ---
     admin_email: str
     admin_password: str
 
+    # --- IA (Anthropic) ---
     anthropic_api_key: str
     anthropic_model: str = "claude-haiku-4-5-20251001"
     anthropic_max_tokens: int = 1024
     anthropic_timeout_seconds: float = 20.0
 
-    cors_origins: str = ""
+    # --- CORS (solo necesario en desarrollo local, frontend en otro puerto) ---
+    cors_origins: str = ""  # coma-separados: "http://localhost:5173,http://localhost:3000"
 
-    port: int = 8000
+    # --- Servidor ---
+    port: int = 8000  # Railway inyecta PORT automáticamente
 
     @field_validator("database_url")
     @classmethod
@@ -40,6 +52,7 @@ class Settings(BaseSettings):
         """Railway/Heroku a veces entregan 'postgres://', pero SQLAlchemy v2 espera 'postgresql://'."""
         if v.startswith("postgres://"):
             v = v.replace("postgres://", "postgresql://", 1)
+        # Forzar driver psycopg v3 si no se especifica
         if v.startswith("postgresql://") and "+psycopg" not in v:
             v = v.replace("postgresql://", "postgresql+psycopg://", 1)
         return v

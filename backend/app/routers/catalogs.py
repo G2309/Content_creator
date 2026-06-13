@@ -1,3 +1,7 @@
+"""Catálogos: dolores del cliente y formatos de contenido.
+
+En Fase 1 son estáticos. En Fase 3 se podrán editar desde la sección de configuración.
+"""
 from fastapi import APIRouter, Depends
 
 from app.deps import get_current_user_active
@@ -7,6 +11,7 @@ from app.schemas import CatalogItem
 router = APIRouter(prefix="/api/catalogs", tags=["catalogs"])
 
 
+# Dolores predefinidos del PDF (puedes editarlos aquí libremente)
 PAINS: list[CatalogItem] = [
     CatalogItem(
         id="paquetes_retenidos_aduana",
@@ -40,6 +45,7 @@ PAINS: list[CatalogItem] = [
     ),
 ]
 
+# Formatos del PDF
 FORMATS: list[CatalogItem] = [
     CatalogItem(
         id="guion_video",

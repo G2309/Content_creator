@@ -1,3 +1,4 @@
+"""Endpoints para leer/editar el contexto del negocio."""
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 

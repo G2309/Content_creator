@@ -1,3 +1,11 @@
+"""Endpoints de gestión de usuarios. Solo accesibles para admins.
+
+Flujo de invitación:
+1. Admin llama a POST /api/users con email + temporary_password.
+2. Se crea el usuario con must_change_password=True.
+3. Admin le pasa esas credenciales al nuevo usuario por canal externo.
+4. Nuevo usuario inicia sesión, la app lo fuerza a /cambiar-password.
+"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -43,6 +51,7 @@ def create_user(
     db.add(user)
     db.flush()
 
+    # Cada usuario tiene su propio contexto de negocio
     db.add(BusinessContext(user_id=user.id))
     db.commit()
     db.refresh(user)
