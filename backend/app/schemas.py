@@ -1,11 +1,9 @@
-"""Esquemas Pydantic — validación de entrada y forma de las respuestas."""
 from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-# ---------------------- Auth ----------------------
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=255)
@@ -14,7 +12,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"
-    expires_in: int  # segundos
+    expires_in: int
     must_change_password: bool = False
 
 
@@ -24,7 +22,6 @@ class PasswordChangeRequest(BaseModel):
 
 
 class UserPublic(BaseModel):
-    """Forma del usuario que ve el propio usuario logueado."""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -35,7 +32,6 @@ class UserPublic(BaseModel):
     created_at: datetime
 
 
-# ---------------------- Gestión de usuarios (solo admin) ----------------------
 class UserCreate(BaseModel):
     email: EmailStr
     temporary_password: str = Field(min_length=8, max_length=255)
@@ -43,7 +39,6 @@ class UserCreate(BaseModel):
 
 
 class UserListItem(BaseModel):
-    """Forma del usuario que ve un admin al listar."""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -54,7 +49,6 @@ class UserListItem(BaseModel):
     created_at: datetime
 
 
-# ---------------------- Contexto de negocio ----------------------
 class BusinessContextBase(BaseModel):
     business_name: str = Field(default="", max_length=255)
     description: str = Field(default="", max_length=5000)
@@ -73,16 +67,33 @@ class BusinessContextPublic(BusinessContextBase):
     updated_at: datetime
 
 
-# ---------------------- Catálogos ----------------------
 class CatalogItem(BaseModel):
     id: str
     label: str
     description: str | None = None
 
 
-# ---------------------- Generación de contenido ----------------------
+class PainPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    label: str
+    description: str
+    position: int
+
+
+class PainCreate(BaseModel):
+    label: str = Field(min_length=2, max_length=255)
+    description: str = Field(default="", max_length=1000)
+
+
+class PainUpdate(BaseModel):
+    label: str = Field(min_length=2, max_length=255)
+    description: str = Field(default="", max_length=1000)
+    position: int | None = None
+
+
 class GenerateRequest(BaseModel):
-    pain_id: str = Field(min_length=1, max_length=64)
+    pain_id: int = Field(ge=1)
     format_id: str = Field(min_length=1, max_length=64)
     extra_idea: str = Field(default="", max_length=2000)
     variation: bool = False
@@ -90,8 +101,10 @@ class GenerateRequest(BaseModel):
 
 class GenerateResponse(BaseModel):
     content: str
-    pain_id: str
+    pain_id: int
+    pain_label: str
     format_id: str
+    format_label: str
     model: str
 
 
@@ -115,3 +128,20 @@ class ScrapeResponse(BaseModel):
     page_urls: list[str]
     raw_text_preview: str
     proposed_context: ProposedBusinessContext
+
+
+class SavedTemplateCreate(BaseModel):
+    content: str = Field(min_length=1, max_length=10000)
+    pain_id: int = Field(ge=1)
+    format_id: str = Field(min_length=1, max_length=64)
+
+
+class SavedTemplatePublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    content: str
+    pain_id: int | None
+    pain_label: str
+    format_id: str
+    format_label: str
+    created_at: datetime

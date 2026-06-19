@@ -3,12 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth.jsx";
 
-/**
- * Doble propósito:
- *  - Si `forced` → se renderiza fuera del Layout (pantalla completa) cuando
- *    el usuario tiene must_change_password=true al iniciar sesión por primera vez.
- *  - Si no → se renderiza dentro del Layout, accesible desde el sidebar.
- */
 export default function ChangePassword({ forced = false }) {
   const { refresh, logout } = useAuth();
   const navigate = useNavigate();
@@ -45,12 +39,9 @@ export default function ChangePassword({ forced = false }) {
       setCurrentPwd("");
       setNewPwd("");
       setConfirmPwd("");
-
-      // Refrescar usuario para que must_change_password ya sea false
       await refresh();
 
       if (forced) {
-        // Salimos del flujo forzado a la app
         setTimeout(() => navigate("/", { replace: true }), 700);
       }
     } catch (err) {

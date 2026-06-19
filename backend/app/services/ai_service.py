@@ -8,7 +8,6 @@ import anthropic
 
 from app.config import get_settings
 from app.models import BusinessContext
-from app.schemas import CatalogItem
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -80,14 +79,21 @@ def _build_system_prompt(ctx: BusinessContext) -> str:
     return "\n".join(parts)
 
 
-def _build_user_prompt(pain, format_item, extra_idea, variation):
+def _build_user_prompt(
+    pain_label: str,
+    pain_description: str,
+    format_id: str,
+    format_label: str,
+    extra_idea: str,
+    variation: bool,
+) -> str:
     instruction = FORMAT_INSTRUCTIONS.get(
-        format_item.id,
-        f"Genera contenido en el formato: {format_item.label}.",
+        format_id,
+        f"Genera contenido en el formato: {format_label}.",
     )
     parts = [
-        f"DOLOR DEL CLIENTE A ATACAR: {pain.label}.",
-        f"Detalle del dolor: {pain.description or '—'}",
+        f"DOLOR DEL CLIENTE A ATACAR: {pain_label}.",
+        f"Detalle del dolor: {pain_description or '—'}",
         "",
         f"FORMATO: {instruction}",
     ]
@@ -106,13 +112,17 @@ def _build_user_prompt(pain, format_item, extra_idea, variation):
 def generate_content(
     *,
     business_context: BusinessContext,
-    pain: CatalogItem,
-    format_item: CatalogItem,
+    pain_label: str,
+    pain_description: str,
+    format_id: str,
+    format_label: str,
     extra_idea: str = "",
     variation: bool = False,
 ) -> str:
     system = _build_system_prompt(business_context)
-    user_msg = _build_user_prompt(pain, format_item, extra_idea, variation)
+    user_msg = _build_user_prompt(
+        pain_label, pain_description, format_id, format_label, extra_idea, variation
+    )
     temperature = 1.0 if variation else 0.8
 
     try:

@@ -1,4 +1,3 @@
-"""Hashing de contraseñas y emisión/verificación de JWT."""
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -9,7 +8,6 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# bcrypt es lento por diseño (good thing) — adecuado para contraseñas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -22,7 +20,6 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(subject: str | int) -> tuple[str, int]:
-    """Devuelve (token, expira_en_segundos)."""
     expires_delta = timedelta(minutes=settings.access_token_expire_minutes)
     expire = datetime.now(timezone.utc) + expires_delta
     payload: dict[str, Any] = {

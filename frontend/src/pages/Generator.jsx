@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 
 export default function Generator() {
   const [pains, setPains] = useState([]);
   const [formats, setFormats] = useState([]);
-  const [selectedPain, setSelectedPain] = useState("");
+  const [selectedPain, setSelectedPain] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState("");
   const [extraIdea, setExtraIdea] = useState("");
 
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedNotice, setSavedNotice] = useState(false);
 
   useEffect(() => {
     Promise.all([api.getPains(), api.getFormats()])
@@ -23,12 +26,13 @@ export default function Generator() {
       .catch((e) => setError(e.message));
   }, []);
 
-  const canGenerate = selectedPain && selectedFormat && !loading;
+  const canGenerate = selectedPain !== null && selectedFormat && !loading;
 
   const run = async (variation) => {
     setError("");
     setLoading(true);
     setCopied(false);
+    setSavedNotice(false);
     try {
       const res = await api.generate({
         pain_id: selectedPain,
@@ -36,7 +40,7 @@ export default function Generator() {
         extra_idea: extraIdea,
         variation,
       });
-      setResult(res.content);
+      setResult(res);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -45,15 +49,36 @@ export default function Generator() {
   };
 
   const copy = async () => {
-    if (!result) return;
+    if (!result?.content) return;
     try {
-      await navigator.clipboard.writeText(result);
+      await navigator.clipboard.writeText(result.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setError("No se pudo copiar al portapapeles.");
     }
   };
+
+  const saveToLibrary = async () => {
+    if (!result) return;
+    setSaving(true);
+    setError("");
+    try {
+      await api.saveTemplate({
+        content: result.content,
+        pain_id: result.pain_id,
+        format_id: result.format_id,
+      });
+      setSavedNotice(true);
+      setTimeout(() => setSavedNotice(false), 2500);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasNoPains = pains.length === 0;
 
   return (
     <>
@@ -69,6 +94,15 @@ export default function Generator() {
       {error && (
         <div className="banner banner-error" style={{ marginBottom: "1.5rem" }}>
           {error}
+        </div>
+      )}
+
+      {hasNoPains && (
+        <div className="banner banner-info" style={{ marginBottom: "1.5rem" }}>
+          No tienes dolores del cliente configurados.{" "}
+          <Link to="/ajustes/dolores" style={{ textDecoration: "underline", fontWeight: 600 }}>
+            Crea al menos uno para empezar a generar contenido.
+          </Link>
         </div>
       )}
 
@@ -146,9 +180,7 @@ export default function Generator() {
             <div className="card-title">Resultado</div>
 
             {!result && !loading && (
-              <div className="result-empty">
-                Aquí aparecerá el texto generado.
-              </div>
+              <div className="result-empty">Aquí aparecerá el texto generado.</div>
             )}
 
             {loading && (
@@ -158,21 +190,35 @@ export default function Generator() {
               </div>
             )}
 
-            {result && !loading && <div className="result-content">{result}</div>}
-
             {result && !loading && (
-              <div className="result-actions">
-                <button className="btn btn-secondary" onClick={copy}>
-                  {copied ? "Copiado ✓" : "Copiar"}
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => run(true)}
-                  disabled={!canGenerate}
-                >
-                  Regenerar (otra versión)
-                </button>
-              </div>
+              <>
+                <div className="result-content">{result.content}</div>
+                {savedNotice && (
+                  <div className="banner banner-success" style={{ marginTop: "1rem" }}>
+                    Guardado en la biblioteca.
+                  </div>
+                )}
+                <div className="result-actions">
+                  <button className="btn btn-secondary" onClick={copy}>
+                    {copied ? "Copiado ✓" : "Copiar"}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={saveToLibrary}
+                    disabled={saving}
+                  >
+                    {saving ? <span className="spinner" /> : null}
+                    {saving ? "Guardando…" : "Guardar en biblioteca"}
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => run(true)}
+                    disabled={!canGenerate}
+                  >
+                    Regenerar
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </aside>

@@ -1,7 +1,3 @@
-"""Catálogos: dolores del cliente y formatos de contenido.
-
-En Fase 1 son estáticos. En Fase 3 se podrán editar desde la sección de configuración.
-"""
 from fastapi import APIRouter, Depends
 
 from app.deps import get_current_user_active
@@ -11,41 +7,6 @@ from app.schemas import CatalogItem
 router = APIRouter(prefix="/api/catalogs", tags=["catalogs"])
 
 
-# Dolores predefinidos del PDF (puedes editarlos aquí libremente)
-PAINS: list[CatalogItem] = [
-    CatalogItem(
-        id="paquetes_retenidos_aduana",
-        label="Paquetes retenidos en aduana",
-        description="El cliente sufre demoras y trámites complicados al pasar mercancía por aduana.",
-    ),
-    CatalogItem(
-        id="costos_sorpresa",
-        label="Costos sorpresa al recibir la mercancía",
-        description="Cobros inesperados al final que rompen el presupuesto del cliente.",
-    ),
-    CatalogItem(
-        id="inventario_tardio",
-        label="Inventario que no llega a tiempo",
-        description="Retrasos que afectan ventas y planificación del negocio del cliente.",
-    ),
-    CatalogItem(
-        id="paquetes_danados",
-        label="Paquetes dañados o mal manejados",
-        description="Mercancía que llega en mal estado por descuidos en la cadena logística.",
-    ),
-    CatalogItem(
-        id="sin_seguimiento",
-        label="Sin seguimiento ni comunicación del envío",
-        description="El cliente queda a ciegas sobre dónde está su paquete y cuándo llegará.",
-    ),
-    CatalogItem(
-        id="importaciones_volumen",
-        label="Importaciones en volumen sin apoyo logístico",
-        description="Empresas que necesitan importar mucho pero no tienen quién les acompañe.",
-    ),
-]
-
-# Formatos del PDF
 FORMATS: list[CatalogItem] = [
     CatalogItem(
         id="guion_video",
@@ -70,18 +31,9 @@ FORMATS: list[CatalogItem] = [
 ]
 
 
-@router.get("/pains", response_model=list[CatalogItem])
-def get_pains(_: User = Depends(get_current_user_active)) -> list[CatalogItem]:
-    return PAINS
-
-
 @router.get("/formats", response_model=list[CatalogItem])
 def get_formats(_: User = Depends(get_current_user_active)) -> list[CatalogItem]:
     return FORMATS
-
-
-def get_pain_by_id(pain_id: str) -> CatalogItem | None:
-    return next((p for p in PAINS if p.id == pain_id), None)
 
 
 def get_format_by_id(format_id: str) -> CatalogItem | None:

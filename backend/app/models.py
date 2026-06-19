@@ -1,4 +1,3 @@
-"""Modelos de base de datos."""
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
@@ -15,7 +14,6 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    # True cuando un admin creó la cuenta — al primer login se obliga a cambiar la contraseña
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -24,13 +22,15 @@ class User(Base):
     business_context: Mapped["BusinessContext | None"] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    customer_pains: Mapped[list["CustomerPain"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    saved_templates: Mapped[list["SavedTemplate"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class BusinessContext(Base):
-    """Contexto del negocio que la IA usa como sistema base.
-
-    En Fase 1 se edita manualmente. En Fase 2 el scraper lo poblará desde una URL.
-    """
     __tablename__ = "business_contexts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -57,3 +57,41 @@ class BusinessContext(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="business_context")
+
+
+class CustomerPain(Base):
+    __tablename__ = "customer_pains"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="customer_pains")
+
+
+class SavedTemplate(Base):
+    __tablename__ = "saved_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    pain_id: Mapped[int | None] = mapped_column(
+        ForeignKey("customer_pains.id", ondelete="SET NULL"), nullable=True
+    )
+    pain_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    format_id: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    format_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="saved_templates")

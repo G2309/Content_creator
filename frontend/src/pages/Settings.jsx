@@ -155,7 +155,7 @@ export default function Settings() {
           )}
 
           {extractInfo && (
-            <div className="banner banner-success" style={{ marginTop: "1rem", flexDirection: "column", alignItems: "flex-start", gap: "0.5rem" }}>
+            <div className="banner banner-info" style={{ marginTop: "1rem", flexDirection: "column", alignItems: "flex-start", gap: "0.5rem" }}>
               <div>
                 <strong>Listo.</strong> Se analizaron {extractInfo.pages} páginas
                 {extractInfo.title ? <> de <em>{extractInfo.title}</em></> : null}.

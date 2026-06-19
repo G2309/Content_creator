@@ -2,17 +2,12 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth.jsx";
 
-/**
- * Página solo accesible para admins. Lista usuarios, permite crear nuevos con
- * contraseña temporal (la app fuerza el cambio al primer login) y eliminarlos.
- */
 export default function Users() {
   const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Form de creación
   const [email, setEmail] = useState("");
   const [tempPwd, setTempPwd] = useState("");
   const [isAdminFlag, setIsAdminFlag] = useState(false);
@@ -36,7 +31,6 @@ export default function Users() {
   }, []);
 
   const generateRandomPassword = () => {
-    // 16 caracteres alfanuméricos — suficientemente aleatorio para temporal
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
     const buf = new Uint32Array(16);
     crypto.getRandomValues(buf);
@@ -116,7 +110,6 @@ export default function Users() {
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 360px)", gap: "1.5rem", alignItems: "start" }}>
-        {/* Lista */}
         <section className="card">
           <div className="card-title">Usuarios existentes</div>
           {loading ? (
@@ -161,7 +154,6 @@ export default function Users() {
           )}
         </section>
 
-        {/* Crear usuario */}
         <section className="card">
           <div className="card-title">Crear nuevo usuario</div>
           <form onSubmit={onCreate}>
@@ -200,7 +192,7 @@ export default function Users() {
                 </button>
               </div>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", cursor: "pointer" }}>
+              <label className="checkbox-row">
                 <input
                   type="checkbox"
                   checked={isAdminFlag}

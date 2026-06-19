@@ -1,4 +1,3 @@
-"""Endpoints de autenticación. No expone registro público — sistema cerrado."""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -22,7 +21,6 @@ settings = get_settings()
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
     user = db.query(User).filter(User.email == payload.email.lower()).first()
 
-    # Mismo mensaje exista o no el email — evita enumeración de cuentas
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,11 +43,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
 
 @router.get("/me", response_model=UserPublic)
 def me(current_user: User = Depends(get_current_user)) -> User:
-    """Devuelve el usuario logueado.
-
-    Nota: usa get_current_user (no _active), porque el frontend lo llama también
-    cuando must_change_password=True para saber a dónde redirigir.
-    """
     return current_user
 
 
@@ -59,11 +52,6 @@ def change_password(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_unrestricted),
 ) -> User:
-    """Cambia la contraseña del usuario logueado.
-
-    Permitido incluso si must_change_password=True — de hecho, este es el único
-    endpoint disponible cuando la cuenta está en ese estado.
-    """
     if not verify_password(payload.current_password, current_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

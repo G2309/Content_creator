@@ -1,4 +1,3 @@
-"""Endpoints de generación de contenido con IA."""
 import logging
 
 import anthropic
@@ -8,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.database import get_db
 from app.deps import get_current_user_active
-from app.models import BusinessContext, User
-from app.routers.catalogs import get_format_by_id, get_pain_by_id
+from app.models import BusinessContext, CustomerPain, User
+from app.routers.catalogs import get_format_by_id
 from app.schemas import GenerateRequest, GenerateResponse
 from app.services.ai_service import generate_content
 
@@ -21,7 +20,6 @@ settings = get_settings()
 def _get_context(db: Session, user: User) -> BusinessContext:
     if user.business_context:
         return user.business_context
-    # Crear contexto vacío si nunca se configuró
     ctx = BusinessContext(user_id=user.id)
     db.add(ctx)
     db.commit()
@@ -35,21 +33,23 @@ def generate(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_active),
 ) -> GenerateResponse:
-    pain = get_pain_by_id(payload.pain_id)
-    if not pain:
-        raise HTTPException(status_code=400, detail="Dolor del cliente no válido")
+    pain = db.get(CustomerPain, payload.pain_id)
+    if not pain or pain.user_id != current_user.id:
+        raise HTTPException(status_code=400, detail="Dolor del cliente no válido.")
 
     format_item = get_format_by_id(payload.format_id)
     if not format_item:
-        raise HTTPException(status_code=400, detail="Formato no válido")
+        raise HTTPException(status_code=400, detail="Formato no válido.")
 
     ctx = _get_context(db, current_user)
 
     try:
         content = generate_content(
             business_context=ctx,
-            pain=pain,
-            format_item=format_item,
+            pain_label=pain.label,
+            pain_description=pain.description,
+            format_id=format_item.id,
+            format_label=format_item.label,
             extra_idea=payload.extra_idea,
             variation=payload.variation,
         )
@@ -85,6 +85,8 @@ def generate(
     return GenerateResponse(
         content=content,
         pain_id=pain.id,
+        pain_label=pain.label,
         format_id=format_item.id,
+        format_label=format_item.label,
         model=settings.anthropic_model,
     )

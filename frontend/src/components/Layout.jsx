@@ -13,12 +13,20 @@ export default function Layout() {
         </div>
 
         <nav className="sidebar-nav">
-          <NavLink to="/" end>
-            Generador
-          </NavLink>
+          <NavLink to="/" end>Generador</NavLink>
+          <NavLink to="/biblioteca">Biblioteca</NavLink>
+
+          <div className="sidebar-section">Configuración</div>
           <NavLink to="/ajustes">Contexto del negocio</NavLink>
+          <NavLink to="/ajustes/dolores">Dolores del cliente</NavLink>
           <NavLink to="/cuenta/password">Cambiar contraseña</NavLink>
-          {user?.is_admin && <NavLink to="/usuarios">Usuarios</NavLink>}
+
+          {user?.is_admin && (
+            <>
+              <div className="sidebar-section">Administración</div>
+              <NavLink to="/usuarios">Usuarios</NavLink>
+            </>
+          )}
         </nav>
 
         <div className="sidebar-footer">

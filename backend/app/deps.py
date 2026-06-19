@@ -1,4 +1,3 @@
-"""Dependencias compartidas de FastAPI (auth, db)."""
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -7,7 +6,6 @@ from app.database import get_db
 from app.models import User
 from app.security import decode_access_token
 
-# tokenUrl es informativo para docs — apuntamos a nuestro endpoint real
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
@@ -45,7 +43,6 @@ def get_current_user(
 
 
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Solo permite el paso a usuarios con is_admin=True."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -55,21 +52,10 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
 
 
 def get_current_user_unrestricted(current_user: User = Depends(get_current_user)) -> User:
-    """Igual que get_current_user, pero pasa también si must_change_password=True.
-
-    Se usa SOLO en el endpoint de cambio de contraseña, que es la única acción
-    permitida mientras el usuario tenga la contraseña temporal pendiente.
-    """
     return current_user
 
 
 def get_current_user_active(current_user: User = Depends(get_current_user)) -> User:
-    """get_current_user + bloquea si el usuario debe cambiar la contraseña.
-
-    Esta es la dependencia "por defecto" para endpoints que requieren un usuario
-    en estado normal. Fuerza al frontend a redirigir a /cambiar-password antes
-    de poder hacer otra cosa.
-    """
     if current_user.must_change_password:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

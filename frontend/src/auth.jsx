@@ -26,11 +26,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     refresh();
-
-    // Logout automático cuando el cliente API detecta un 401
-    const handleLogout = () => {
-      setUser(null);
-    };
+    const handleLogout = () => setUser(null);
     window.addEventListener("auth:logout", handleLogout);
     return () => window.removeEventListener("auth:logout", handleLogout);
   }, [refresh]);
@@ -47,7 +43,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
