@@ -16,6 +16,10 @@ export default function Library() {
   const [filterFormat, setFilterFormat] = useState("");
   const [filterPain, setFilterPain] = useState("");
 
+  const [editingId, setEditingId] = useState(null);
+  const [editContent, setEditContent] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const load = async () => {
     setError("");
     try {
@@ -77,14 +81,46 @@ export default function Library() {
     }
   };
 
+  const startEdit = (t) => {
+    setEditingId(t.id);
+    setEditContent(t.content);
+    setExpanded((prev) => ({ ...prev, [t.id]: true }));
+    setError("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditContent("");
+  };
+
+  const saveEdit = async () => {
+    if (!editContent.trim()) {
+      setError("La plantilla no puede quedar vacía.");
+      return;
+    }
+    setSavingEdit(true);
+    setError("");
+    try {
+      const updated = await api.updateTemplate(editingId, editContent);
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === updated.id ? { ...t, content: updated.content } : t))
+      );
+      cancelEdit();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
     <>
       <header className="page-header">
         <div className="page-eyebrow">Biblioteca</div>
         <h1 className="page-title">Tus plantillas guardadas</h1>
         <p className="page-subtitle">
-          Aquí viven los textos que marcaste como buenos. Puedes copiarlos directo o
-          eliminar los que ya no sirvan.
+          Aquí viven los textos que marcaste como buenos. Puedes editarlos, copiarlos
+          directo o eliminar los que ya no sirvan.
         </p>
       </header>
 
@@ -138,6 +174,8 @@ export default function Library() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {filtered.map((t) => {
               const isExpanded = !!expanded[t.id];
+              const isEditing = editingId === t.id;
+
               return (
                 <article key={t.id} className="template-card">
                   <div className="template-card-meta">
@@ -148,24 +186,60 @@ export default function Library() {
                     <span className="template-card-date">{formatDate(t.created_at)}</span>
                   </div>
 
-                  <div className={`template-card-content ${isExpanded ? "expanded" : ""}`}>
-                    {t.content}
-                  </div>
+                  {isEditing ? (
+                    <textarea
+                      className="textarea"
+                      rows={12}
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      maxLength={10000}
+                      style={{ minHeight: "200px", fontFamily: "inherit", lineHeight: 1.6 }}
+                    />
+                  ) : (
+                    <div className={`template-card-content ${isExpanded ? "expanded" : ""}`}>
+                      {t.content}
+                    </div>
+                  )}
 
                   <div className="template-card-actions">
-                    <button className="btn btn-secondary" onClick={() => copy(t)}>
-                      {copiedId === t.id ? "Copiado ✓" : "Copiar"}
-                    </button>
-                    <button className="btn btn-ghost" onClick={() => toggle(t.id)}>
-                      {isExpanded ? "Mostrar menos" : "Mostrar completo"}
-                    </button>
-                    <button
-                      className="btn btn-ghost"
-                      style={{ color: "var(--color-danger)", marginLeft: "auto" }}
-                      onClick={() => remove(t)}
-                    >
-                      Eliminar
-                    </button>
+                    {isEditing ? (
+                      <>
+                        <button
+                          className="btn btn-primary"
+                          onClick={saveEdit}
+                          disabled={savingEdit || !editContent.trim()}
+                        >
+                          {savingEdit ? <span className="spinner" /> : null}
+                          {savingEdit ? "Guardando…" : "Guardar cambios"}
+                        </button>
+                        <button
+                          className="btn btn-ghost"
+                          onClick={cancelEdit}
+                          disabled={savingEdit}
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="btn btn-secondary" onClick={() => copy(t)}>
+                          {copiedId === t.id ? "Copiado ✓" : "Copiar"}
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => startEdit(t)}>
+                          Editar
+                        </button>
+                        <button className="btn btn-ghost" onClick={() => toggle(t.id)}>
+                          {isExpanded ? "Mostrar menos" : "Mostrar completo"}
+                        </button>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ color: "var(--color-danger)", marginLeft: "auto" }}
+                          onClick={() => remove(t)}
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
                   </div>
                 </article>
               );

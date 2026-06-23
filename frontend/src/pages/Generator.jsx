@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 
 export default function Generator() {
   const [pains, setPains] = useState([]);
   const [formats, setFormats] = useState([]);
+  const [hooks, setHooks] = useState([]);
   const [selectedPain, setSelectedPain] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState("");
+  const [selectedHook, setSelectedHook] = useState("");
   const [extraIdea, setExtraIdea] = useState("");
 
   const [result, setResult] = useState(null);
@@ -17,16 +19,23 @@ export default function Generator() {
   const [savedNotice, setSavedNotice] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.getPains(), api.getFormats()])
-      .then(([p, f]) => {
+    Promise.all([api.getPains(), api.getFormats(), api.getHooks()])
+      .then(([p, f, h]) => {
         setPains(p);
         setFormats(f);
+        setHooks(h);
         if (f.length > 0) setSelectedFormat(f[0].id);
       })
       .catch((e) => setError(e.message));
   }, []);
 
-  const canGenerate = selectedPain !== null && selectedFormat && !loading;
+  const isGuionVideo = selectedFormat === "guion_video";
+
+  const canGenerate = useMemo(() => {
+    if (selectedPain === null || !selectedFormat || loading) return false;
+    if (isGuionVideo && !selectedHook) return false;
+    return true;
+  }, [selectedPain, selectedFormat, selectedHook, isGuionVideo, loading]);
 
   const run = async (variation) => {
     setError("");
@@ -37,6 +46,7 @@ export default function Generator() {
       const res = await api.generate({
         pain_id: selectedPain,
         format_id: selectedFormat,
+        hook_id: isGuionVideo ? selectedHook : "",
         extra_idea: extraIdea,
         variation,
       });
@@ -148,18 +158,46 @@ export default function Generator() {
             </div>
           </section>
 
+          {isGuionVideo && (
+            <section className="card">
+              <div className="card-title">Tipo de gancho</div>
+              <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
+                Elige cómo quieres que arranque el guion. El gancho marca los primeros 2 segundos —
+                lo que decide si la gente se queda o sigue de largo.
+              </p>
+              <div className="option-grid">
+                {hooks.map((h) => (
+                  <button
+                    key={h.id}
+                    type="button"
+                    className={`option-card ${selectedHook === h.id ? "selected" : ""}`}
+                    onClick={() => setSelectedHook(h.id)}
+                    aria-pressed={selectedHook === h.id}
+                  >
+                    <span className="option-card-label">{h.label}</span>
+                    {h.description && (
+                      <span className="option-card-desc">{h.description}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section className="card">
-            <div className="card-title">Idea o contexto adicional (opcional)</div>
+            <div className="card-title">Idea, contexto o CTA específico (opcional)</div>
             <div className="field">
               <textarea
                 className="textarea"
-                rows={3}
-                placeholder="Ej. quiero mencionar el envío gratis de esta semana, o el caso del cliente X…"
+                rows={4}
+                placeholder='Ej: "El CTA debe ser: comenta la palabra ENVÍO y te mandamos nuestras tarifas por DM"'
                 value={extraIdea}
                 onChange={(e) => setExtraIdea(e.target.value)}
                 maxLength={2000}
               />
-              <span className="field-hint">{extraIdea.length}/2000</span>
+              <span className="field-hint">
+                {extraIdea.length}/2000 · Si pones un CTA aquí, la IA lo usa textualmente al final.
+              </span>
             </div>
 
             <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.5rem" }}>
@@ -172,6 +210,11 @@ export default function Generator() {
                 {loading ? "Generando…" : "Generar texto"}
               </button>
             </div>
+            {isGuionVideo && !selectedHook && (
+              <p style={{ fontSize: "0.8125rem", color: "var(--color-text-subtle)", marginTop: "0.5rem" }}>
+                Selecciona un tipo de gancho para poder generar.
+              </p>
+            )}
           </section>
         </div>
 

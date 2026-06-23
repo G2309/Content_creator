@@ -84,6 +84,7 @@ export const api = {
   deletePain: (id) => request(`/api/pains/${id}`, { method: "DELETE" }),
 
   getFormats: () => request("/api/catalogs/formats"),
+  getHooks: () => request("/api/catalogs/hooks"),
 
   getContext: () => request("/api/context"),
   updateContext: (data) =>
@@ -98,6 +99,8 @@ export const api = {
   listTemplates: () => request("/api/library"),
   saveTemplate: (payload) =>
     request("/api/library", { method: "POST", body: payload }),
+  updateTemplate: (id, content) =>
+    request(`/api/library/${id}`, { method: "PUT", body: { content } }),
   deleteTemplate: (id) =>
     request(`/api/library/${id}`, { method: "DELETE" }),
 };
