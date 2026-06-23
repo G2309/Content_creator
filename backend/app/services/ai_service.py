@@ -18,14 +18,34 @@ _client = anthropic.Anthropic(
 )
 
 
+GUION_VIDEO_INSTRUCTION = (
+    "Genera un GUION para video de Instagram (Reel largo o video de feed) "
+    "que dure entre 1 y 3 minutos hablados — entre 200 y 450 palabras aproximadamente. "
+    "NO devuelvas un texto corto: si te queda menos de 200 palabras, sigue desarrollando.\n\n"
+    "ESTRUCTURA OBLIGATORIA — marca cada sección con su nombre en MAYÚSCULAS:\n\n"
+    "HOOK:\n"
+    "Una sola línea muy fuerte que detenga el scroll en los primeros 2 segundos. "
+    "Sigue ESTRICTAMENTE la instrucción del tipo de gancho elegido.\n\n"
+    "PROBLEMA (70% del guion — la sección más larga):\n"
+    "Desarrolla el dolor PROFUNDAMENTE. Esta es la parte más extensa, donde generas "
+    "tensión emocional y amplificas las consecuencias del problema. Toca el problema "
+    "desde varios ángulos: cómo se siente, qué se pierde, qué pasa cuando se ignora, "
+    "casos concretos donde aparece. NO basta con describirlo — el espectador debe "
+    "incomodarse e identificarse. Usa frases cortas y directas para sonar natural al hablar.\n\n"
+    "ENSEÑANZA / MORALEJA (20% del guion):\n"
+    "La lección que se desprende del problema. Qué patrón hay detrás, qué tendría que "
+    "cambiar de mentalidad la audiencia para no caer en esto. No es la solución todavía, "
+    "es la reflexión que conecta el dolor con el aprendizaje.\n\n"
+    "SOLUCIÓN (10% del guion — la parte más breve):\n"
+    "Recién aquí presentas cómo se resuelve. Concreto, sin extenderse. "
+    "Es el alivio después del dolor, no un sermón comercial.\n\n"
+    "CTA:\n"
+    "Una línea final accionable que conecte con la audiencia."
+)
+
+
 FORMAT_INSTRUCTIONS: dict[str, str] = {
-    "guion_video": (
-        "Genera un GUION para video corto de Instagram (Reel). "
-        "Estructura obligatoria: HOOK (1 línea fuerte), PROBLEMA (2-3 líneas), "
-        "SOLUCIÓN (2-3 líneas) y CTA (1 línea). "
-        "Marca claramente cada sección con su nombre en mayúsculas. "
-        "Duración objetivo: 30-45 segundos hablados."
-    ),
+    "guion_video": GUION_VIDEO_INSTRUCTION,
     "caption_post": (
         "Genera un CAPTION para post o reel de Instagram. "
         "Primera línea = gancho fuerte que detenga el scroll. "
@@ -52,6 +72,13 @@ def _build_system_prompt(ctx: BusinessContext) -> str:
         "Eres un copywriter experto en contenido orgánico y publicitario para Instagram en español.",
         "Tu trabajo es generar textos listos para publicar, sin meta-comentarios ni explicaciones.",
         "NO escribas frases como 'Aquí tienes', 'Espero te sirva' o similares. Devuelve solo el contenido pedido.",
+        "",
+        "REGLAS CRÍTICAS:",
+        "- Si el usuario te da una IDEA O CONTEXTO ADICIONAL, debes incorporarla LITERALMENTE en el resultado.",
+        "- Si esa idea adicional contiene un CTA específico (ej. 'comenta la palabra X y te enviamos info'), "
+        "ese CTA debe aparecer textualmente al final, sin reformularlo ni reemplazarlo por uno genérico.",
+        "- Si la idea adicional menciona una promoción, fecha, palabra clave o detalle concreto, "
+        "ese detalle debe aparecer en el contenido final.",
         "",
         "CONTEXTO DEL NEGOCIO PARA EL QUE ESCRIBES:",
     ]
@@ -84,6 +111,8 @@ def _build_user_prompt(
     pain_description: str,
     format_id: str,
     format_label: str,
+    hook_label: str,
+    hook_instruction: str,
     extra_idea: str,
     variation: bool,
 ) -> str:
@@ -97,13 +126,32 @@ def _build_user_prompt(
         "",
         f"FORMATO: {instruction}",
     ]
+
+    if hook_instruction:
+        parts.extend([
+            "",
+            f"TIPO DE GANCHO ELEGIDO: {hook_label}.",
+            f"INSTRUCCIÓN DEL GANCHO (cúmplela al pie de la letra): {hook_instruction}",
+        ])
+
     if extra_idea.strip():
-        parts.extend(["", f"IDEA O CONTEXTO ADICIONAL DEL USUARIO: {extra_idea.strip()}"])
+        parts.extend([
+            "",
+            "=== IDEA O CONTEXTO ADICIONAL DEL USUARIO (PRIORIDAD MÁXIMA) ===",
+            extra_idea.strip(),
+            "=== FIN DE LA IDEA ADICIONAL ===",
+            "",
+            "Esta idea adicional NO es opcional. Si contiene un CTA, una promoción, una palabra clave "
+            "o cualquier dato específico, DEBE aparecer textualmente en el contenido final. "
+            "Si contiene un CTA, ese CTA va literal al final.",
+        ])
+
     if variation:
         parts.extend([
             "",
             "Esta es una REGENERACIÓN: ofrece un ángulo claramente distinto al que daría "
-            "una primera versión obvia. Cambia el hook, el enfoque o la metáfora.",
+            "una primera versión obvia. Cambia el enfoque, la metáfora o el ejemplo principal — "
+            "pero mantén el tipo de gancho elegido y respeta la idea adicional del usuario si la hay.",
         ])
     parts.extend(["", "Devuelve únicamente el texto final, sin encabezados ni notas."])
     return "\n".join(parts)
@@ -116,19 +164,26 @@ def generate_content(
     pain_description: str,
     format_id: str,
     format_label: str,
+    hook_label: str = "",
+    hook_instruction: str = "",
     extra_idea: str = "",
     variation: bool = False,
 ) -> str:
     system = _build_system_prompt(business_context)
     user_msg = _build_user_prompt(
-        pain_label, pain_description, format_id, format_label, extra_idea, variation
+        pain_label, pain_description, format_id, format_label,
+        hook_label, hook_instruction, extra_idea, variation,
     )
     temperature = 1.0 if variation else 0.8
+
+    max_tokens = settings.anthropic_max_tokens
+    if format_id == "guion_video":
+        max_tokens = max(max_tokens, 2048)
 
     try:
         response = _client.messages.create(
             model=settings.anthropic_model,
-            max_tokens=settings.anthropic_max_tokens,
+            max_tokens=max_tokens,
             temperature=temperature,
             system=system,
             messages=[{"role": "user", "content": user_msg}],

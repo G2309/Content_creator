@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.database import get_db
 from app.deps import get_current_user_active
+from app.hooks import get_hook_by_id
 from app.models import BusinessContext, CustomerPain, User
 from app.routers.catalogs import get_format_by_id
 from app.schemas import GenerateRequest, GenerateResponse
@@ -41,6 +42,12 @@ def generate(
     if not format_item:
         raise HTTPException(status_code=400, detail="Formato no válido.")
 
+    hook = None
+    if payload.hook_id:
+        hook = get_hook_by_id(payload.hook_id)
+        if not hook:
+            raise HTTPException(status_code=400, detail="Tipo de gancho no válido.")
+
     ctx = _get_context(db, current_user)
 
     try:
@@ -50,6 +57,8 @@ def generate(
             pain_description=pain.description,
             format_id=format_item.id,
             format_label=format_item.label,
+            hook_label=hook["label"] if hook else "",
+            hook_instruction=hook["instruction"] if hook else "",
             extra_idea=payload.extra_idea,
             variation=payload.variation,
         )
@@ -88,5 +97,7 @@ def generate(
         pain_label=pain.label,
         format_id=format_item.id,
         format_label=format_item.label,
+        hook_id=hook["id"] if hook else "",
+        hook_label=hook["label"] if hook else "",
         model=settings.anthropic_model,
     )

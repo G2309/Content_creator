@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.deps import get_current_user_active
+from app.hooks import HOOK_TYPES
 from app.models import User
 from app.schemas import CatalogItem
 
@@ -11,7 +12,7 @@ FORMATS: list[CatalogItem] = [
     CatalogItem(
         id="guion_video",
         label="Guion para video de Instagram",
-        description="Hook + problema + solución + CTA. Para Reels y videos cortos.",
+        description="Hook + problema + enseñanza + solución + CTA. Para Reels y videos largos (1 a 3 minutos).",
     ),
     CatalogItem(
         id="caption_post",
@@ -34,6 +35,14 @@ FORMATS: list[CatalogItem] = [
 @router.get("/formats", response_model=list[CatalogItem])
 def get_formats(_: User = Depends(get_current_user_active)) -> list[CatalogItem]:
     return FORMATS
+
+
+@router.get("/hooks", response_model=list[CatalogItem])
+def get_hooks(_: User = Depends(get_current_user_active)) -> list[CatalogItem]:
+    return [
+        CatalogItem(id=h["id"], label=h["label"], description=h["description"])
+        for h in HOOK_TYPES
+    ]
 
 
 def get_format_by_id(format_id: str) -> CatalogItem | None:

@@ -95,6 +95,7 @@ class PainUpdate(BaseModel):
 class GenerateRequest(BaseModel):
     pain_id: int = Field(ge=1)
     format_id: str = Field(min_length=1, max_length=64)
+    hook_id: str = Field(default="", max_length=64)
     extra_idea: str = Field(default="", max_length=2000)
     variation: bool = False
 
@@ -105,6 +106,8 @@ class GenerateResponse(BaseModel):
     pain_label: str
     format_id: str
     format_label: str
+    hook_id: str = ""
+    hook_label: str = ""
     model: str
 
 
@@ -134,6 +137,10 @@ class SavedTemplateCreate(BaseModel):
     content: str = Field(min_length=1, max_length=10000)
     pain_id: int = Field(ge=1)
     format_id: str = Field(min_length=1, max_length=64)
+
+
+class SavedTemplateUpdate(BaseModel):
+    content: str = Field(min_length=1, max_length=10000)
 
 
 class SavedTemplatePublic(BaseModel):

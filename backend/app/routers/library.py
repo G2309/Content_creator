@@ -5,7 +5,11 @@ from app.database import get_db
 from app.deps import get_current_user_active
 from app.models import CustomerPain, SavedTemplate, User
 from app.routers.catalogs import get_format_by_id
-from app.schemas import SavedTemplateCreate, SavedTemplatePublic
+from app.schemas import (
+    SavedTemplateCreate,
+    SavedTemplatePublic,
+    SavedTemplateUpdate,
+)
 
 router = APIRouter(prefix="/api/library", tags=["library"])
 
@@ -46,6 +50,23 @@ def save_template(
         format_label=format_item.label,
     )
     db.add(template)
+    db.commit()
+    db.refresh(template)
+    return template
+
+
+@router.put("/{template_id}", response_model=SavedTemplatePublic)
+def update_template(
+    template_id: int,
+    payload: SavedTemplateUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_active),
+) -> SavedTemplate:
+    template = db.get(SavedTemplate, template_id)
+    if not template or template.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada.")
+
+    template.content = payload.content
     db.commit()
     db.refresh(template)
     return template
