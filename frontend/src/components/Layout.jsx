@@ -17,7 +17,7 @@ export default function Layout() {
           <NavLink to="/biblioteca">Biblioteca</NavLink>
 
           <div className="sidebar-section">Configuración</div>
-          <NavLink to="/ajustes">Contexto del negocio</NavLink>
+          <NavLink to="/ajustes" end>Contextos del negocio</NavLink>
           <NavLink to="/ajustes/dolores">Dolores del cliente</NavLink>
           <NavLink to="/cuenta/password">Cambiar contraseña</NavLink>
 

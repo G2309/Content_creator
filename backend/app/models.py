@@ -19,8 +19,8 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    business_context: Mapped["BusinessContext | None"] = relationship(
-        back_populates="user", uselist=False, cascade="all, delete-orphan"
+    business_contexts: Mapped[list["BusinessContext"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )
     customer_pains: Mapped[list["CustomerPain"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -35,8 +35,11 @@ class BusinessContext(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+
+    name: Mapped[str] = mapped_column(String(255), default="Principal", nullable=False)
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     business_name: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
@@ -56,7 +59,7 @@ class BusinessContext(Base):
         nullable=False,
     )
 
-    user: Mapped["User"] = relationship(back_populates="business_context")
+    user: Mapped["User"] = relationship(back_populates="business_contexts")
 
 
 class CustomerPain(Base):

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def ensure_schema(engine: Engine, admin_email: str | None = None) -> None:
     if engine.dialect.name != "postgresql":
         logger.warning(
-            "Migraciones manuales asumen Postgres; dialecto detectado: %s — se omiten",
+            "Migraciones asumen Postgres; dialecto detectado: %s — se omiten",
             engine.dialect.name,
         )
         return
@@ -25,7 +25,7 @@ def ensure_schema(engine: Engine, admin_email: str | None = None) -> None:
             text("SELECT to_regclass('public.users') IS NOT NULL")
         ).scalar()
         if not users_exists:
-            logger.info("Tabla users aún no existe — saltando migración")
+            logger.info("Tabla users no existe — saltando migración")
             return
 
         conn.execute(text(
@@ -47,6 +47,47 @@ def ensure_schema(engine: Engine, admin_email: str | None = None) -> None:
             )
             if result.rowcount > 0:
                 logger.info("Usuario admin existente promovido: %s", admin_email)
+
+        bc_exists = conn.execute(
+            text("SELECT to_regclass('public.business_contexts') IS NOT NULL")
+        ).scalar()
+        if bc_exists:
+            conn.execute(text(
+                "ALTER TABLE business_contexts "
+                "ADD COLUMN IF NOT EXISTS name VARCHAR(255) NOT NULL DEFAULT 'Principal'"
+            ))
+            conn.execute(text(
+                "ALTER TABLE business_contexts "
+                "ADD COLUMN IF NOT EXISTS is_primary BOOLEAN NOT NULL DEFAULT FALSE"
+            ))
+
+            unique_constraints = conn.execute(text("""
+                SELECT con.conname
+                FROM pg_constraint con
+                INNER JOIN pg_class rel ON rel.oid = con.conrelid
+                WHERE rel.relname = 'business_contexts'
+                  AND con.contype = 'u'
+            """)).fetchall()
+            for row in unique_constraints:
+                conn.execute(text(
+                    f'ALTER TABLE business_contexts DROP CONSTRAINT IF EXISTS "{row[0]}"'
+                ))
+                logger.info("Constraint único eliminado: %s", row[0])
+
+            conn.execute(text("""
+                UPDATE business_contexts
+                SET is_primary = TRUE,
+                    name = CASE
+                        WHEN COALESCE(business_name, '') != '' THEN business_name
+                        ELSE 'Principal'
+                    END
+                WHERE id IN (
+                    SELECT DISTINCT ON (user_id) id
+                    FROM business_contexts
+                    ORDER BY user_id, id ASC
+                )
+                AND is_primary = FALSE
+            """))
 
     logger.info("Migración de esquema aplicada.")
 

@@ -3,7 +3,8 @@ import { useAuth } from "./auth.jsx";
 import Layout from "./components/Layout.jsx";
 import Login from "./pages/Login.jsx";
 import Generator from "./pages/Generator.jsx";
-import Settings from "./pages/Settings.jsx";
+import Contexts from "./pages/Contexts.jsx";
+import ContextEdit from "./pages/ContextEdit.jsx";
 import Users from "./pages/Users.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx";
 import Library from "./pages/Library.jsx";
@@ -59,7 +60,9 @@ export default function App() {
       >
         <Route index element={<Generator />} />
         <Route path="biblioteca" element={<Library />} />
-        <Route path="ajustes" element={<Settings />} />
+        <Route path="ajustes" element={<Contexts />} />
+        <Route path="ajustes/nuevo" element={<ContextEdit />} />
+        <Route path="ajustes/contexto/:id" element={<ContextEdit />} />
         <Route path="ajustes/dolores" element={<Pains />} />
         <Route path="cuenta/password" element={<ChangePassword />} />
         <Route path="usuarios" element={<AdminOnly><Users /></AdminOnly>} />

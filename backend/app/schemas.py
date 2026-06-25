@@ -50,6 +50,7 @@ class UserListItem(BaseModel):
 
 
 class BusinessContextBase(BaseModel):
+    name: str = Field(default="Principal", min_length=1, max_length=255)
     business_name: str = Field(default="", max_length=255)
     description: str = Field(default="", max_length=5000)
     services: str = Field(default="", max_length=5000)
@@ -58,12 +59,27 @@ class BusinessContextBase(BaseModel):
     tone: str = Field(default="", max_length=255)
 
 
+class BusinessContextCreate(BusinessContextBase):
+    pass
+
+
 class BusinessContextUpdate(BusinessContextBase):
     pass
 
 
 class BusinessContextPublic(BusinessContextBase):
     model_config = ConfigDict(from_attributes=True)
+    id: int
+    is_primary: bool
+    updated_at: datetime
+
+
+class BusinessContextListItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    business_name: str
+    is_primary: bool
     updated_at: datetime
 
 
@@ -98,6 +114,7 @@ class GenerateRequest(BaseModel):
     hook_id: str = Field(default="", max_length=64)
     extra_idea: str = Field(default="", max_length=2000)
     variation: bool = False
+    reference_context_ids: list[int] = Field(default_factory=list, max_length=10)
 
 
 class GenerateResponse(BaseModel):

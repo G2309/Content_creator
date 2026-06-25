@@ -37,7 +37,7 @@ def seed_admin_user(db: Session) -> None:
     db.add(user)
     db.flush()
 
-    db.add(BusinessContext(user_id=user.id))
+    db.add(BusinessContext(user_id=user.id, name="Principal", is_primary=True))
     for idx, pain_data in enumerate(DEFAULT_PAINS):
         db.add(CustomerPain(
             user_id=user.id,

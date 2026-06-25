@@ -10,22 +10,13 @@ from app.deps import get_current_user_active
 from app.hooks import get_hook_by_id
 from app.models import BusinessContext, CustomerPain, User
 from app.routers.catalogs import get_format_by_id
+from app.routers.context import get_primary_context
 from app.schemas import GenerateRequest, GenerateResponse
 from app.services.ai_service import generate_content
 
 router = APIRouter(prefix="/api/content", tags=["content"])
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-
-def _get_context(db: Session, user: User) -> BusinessContext:
-    if user.business_context:
-        return user.business_context
-    ctx = BusinessContext(user_id=user.id)
-    db.add(ctx)
-    db.commit()
-    db.refresh(ctx)
-    return ctx
 
 
 @router.post("/generate", response_model=GenerateResponse)
@@ -48,11 +39,27 @@ def generate(
         if not hook:
             raise HTTPException(status_code=400, detail="Tipo de gancho no válido.")
 
-    ctx = _get_context(db, current_user)
+    primary_ctx = get_primary_context(db, current_user)
+
+    reference_contexts: list[BusinessContext] = []
+    if payload.reference_context_ids:
+        clean_ids = [
+            i for i in payload.reference_context_ids if i != primary_ctx.id
+        ]
+        if clean_ids:
+            reference_contexts = (
+                db.query(BusinessContext)
+                .filter(
+                    BusinessContext.id.in_(clean_ids),
+                    BusinessContext.user_id == current_user.id,
+                )
+                .all()
+            )
 
     try:
         content = generate_content(
-            business_context=ctx,
+            business_context=primary_ctx,
+            reference_contexts=reference_contexts,
             pain_label=pain.label,
             pain_description=pain.description,
             format_id=format_item.id,

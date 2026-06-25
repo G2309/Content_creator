@@ -67,7 +67,28 @@ FORMAT_INSTRUCTIONS: dict[str, str] = {
 }
 
 
-def _build_system_prompt(ctx: BusinessContext) -> str:
+def _context_lines(ctx: BusinessContext, label: str) -> list[str]:
+    lines = [f"=== {label}: \"{ctx.name}\" ==="]
+    if ctx.business_name.strip():
+        lines.append(f"- Nombre: {ctx.business_name.strip()}")
+    if ctx.description.strip():
+        lines.append(f"- Descripción: {ctx.description.strip()}")
+    if ctx.services.strip():
+        lines.append(f"- Servicios: {ctx.services.strip()}")
+    if ctx.target_audience.strip():
+        lines.append(f"- A quién le hablan: {ctx.target_audience.strip()}")
+    if ctx.value_proposition.strip():
+        lines.append(f"- Propuesta de valor: {ctx.value_proposition.strip()}")
+    if ctx.tone.strip():
+        lines.append(f"- Tono de voz: {ctx.tone.strip()}")
+    lines.append(f"=== FIN {label} ===")
+    return lines
+
+
+def _build_system_prompt(
+    ctx: BusinessContext,
+    reference_contexts: list[BusinessContext] | None = None,
+) -> str:
     parts = [
         "Eres un copywriter experto en contenido orgánico y publicitario para Instagram en español.",
         "Tu trabajo es generar textos listos para publicar, sin meta-comentarios ni explicaciones.",
@@ -80,29 +101,40 @@ def _build_system_prompt(ctx: BusinessContext) -> str:
         "- Si la idea adicional menciona una promoción, fecha, palabra clave o detalle concreto, "
         "ese detalle debe aparecer en el contenido final.",
         "",
-        "CONTEXTO DEL NEGOCIO PARA EL QUE ESCRIBES:",
+        "CONTEXTO DEL NEGOCIO PARA EL QUE ESCRIBES (este es el negocio principal, "
+        "el contenido debe sonar a su voz y resolver sus objetivos):",
     ]
-    has_context = False
-    if ctx.business_name.strip():
-        parts.append(f"- Nombre: {ctx.business_name.strip()}")
-        has_context = True
-    if ctx.description.strip():
-        parts.append(f"- Descripción: {ctx.description.strip()}")
-        has_context = True
-    if ctx.services.strip():
-        parts.append(f"- Servicios: {ctx.services.strip()}")
-        has_context = True
-    if ctx.target_audience.strip():
-        parts.append(f"- A quién le hablan: {ctx.target_audience.strip()}")
-        has_context = True
-    if ctx.value_proposition.strip():
-        parts.append(f"- Propuesta de valor: {ctx.value_proposition.strip()}")
-        has_context = True
-    if ctx.tone.strip():
-        parts.append(f"- Tono de voz: {ctx.tone.strip()}")
-        has_context = True
-    if not has_context:
+
+    has_primary_data = any([
+        ctx.business_name.strip(),
+        ctx.description.strip(),
+        ctx.services.strip(),
+        ctx.target_audience.strip(),
+        ctx.value_proposition.strip(),
+        ctx.tone.strip(),
+    ])
+
+    if has_primary_data:
+        parts.extend(_context_lines(ctx, "NEGOCIO PRINCIPAL"))
+    else:
         parts.append("(Sin contexto configurado todavía — escribe de forma genérica pero profesional.)")
+
+    if reference_contexts:
+        parts.extend([
+            "",
+            "CONTEXTOS DE REFERENCIA (otros negocios, competidores o marcas que el usuario quiere tener "
+            "disponibles para comparar, contrastar o mencionar si la idea adicional lo pide):",
+        ])
+        for ref in reference_contexts:
+            parts.extend(_context_lines(ref, "REFERENCIA"))
+        parts.extend([
+            "",
+            "Importante sobre las referencias:",
+            "- NUNCA escribas como si fueras el negocio de referencia. La voz siempre es la del NEGOCIO PRINCIPAL.",
+            "- Úsalas solo si la idea adicional del usuario pide comparación o contraste explícito.",
+            "- Si las comparas, resalta lo que diferencia y favorece al NEGOCIO PRINCIPAL.",
+        ])
+
     return "\n".join(parts)
 
 
@@ -143,7 +175,7 @@ def _build_user_prompt(
             "",
             "Esta idea adicional NO es opcional. Si contiene un CTA, una promoción, una palabra clave "
             "o cualquier dato específico, DEBE aparecer textualmente en el contenido final. "
-            "Si contiene un CTA, ese CTA va literal al final.",
+            "Si pide comparar con un contexto de referencia, hazlo usando los datos disponibles.",
         ])
 
     if variation:
@@ -160,6 +192,7 @@ def _build_user_prompt(
 def generate_content(
     *,
     business_context: BusinessContext,
+    reference_contexts: list[BusinessContext] | None = None,
     pain_label: str,
     pain_description: str,
     format_id: str,
@@ -169,7 +202,7 @@ def generate_content(
     extra_idea: str = "",
     variation: bool = False,
 ) -> str:
-    system = _build_system_prompt(business_context)
+    system = _build_system_prompt(business_context, reference_contexts)
     user_msg = _build_user_prompt(
         pain_label, pain_description, format_id, format_label,
         hook_label, hook_instruction, extra_idea, variation,

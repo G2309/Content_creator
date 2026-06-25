@@ -6,9 +6,12 @@ export default function Generator() {
   const [pains, setPains] = useState([]);
   const [formats, setFormats] = useState([]);
   const [hooks, setHooks] = useState([]);
+  const [contexts, setContexts] = useState([]);
+
   const [selectedPain, setSelectedPain] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState("");
   const [selectedHook, setSelectedHook] = useState("");
+  const [referenceIds, setReferenceIds] = useState([]);
   const [extraIdea, setExtraIdea] = useState("");
 
   const [result, setResult] = useState(null);
@@ -19,23 +22,32 @@ export default function Generator() {
   const [savedNotice, setSavedNotice] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.getPains(), api.getFormats(), api.getHooks()])
-      .then(([p, f, h]) => {
+    Promise.all([api.getPains(), api.getFormats(), api.getHooks(), api.getContexts()])
+      .then(([p, f, h, c]) => {
         setPains(p);
         setFormats(f);
         setHooks(h);
+        setContexts(c);
         if (f.length > 0) setSelectedFormat(f[0].id);
       })
       .catch((e) => setError(e.message));
   }, []);
 
   const isGuionVideo = selectedFormat === "guion_video";
+  const primaryContext = contexts.find((c) => c.is_primary);
+  const otherContexts = contexts.filter((c) => !c.is_primary);
 
   const canGenerate = useMemo(() => {
     if (selectedPain === null || !selectedFormat || loading) return false;
     if (isGuionVideo && !selectedHook) return false;
     return true;
   }, [selectedPain, selectedFormat, selectedHook, isGuionVideo, loading]);
+
+  const toggleReference = (id) => {
+    setReferenceIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const run = async (variation) => {
     setError("");
@@ -49,6 +61,7 @@ export default function Generator() {
         hook_id: isGuionVideo ? selectedHook : "",
         extra_idea: extraIdea,
         variation,
+        reference_context_ids: referenceIds,
       });
       setResult(res);
     } catch (e) {
@@ -89,6 +102,7 @@ export default function Generator() {
   };
 
   const hasNoPains = pains.length === 0;
+  const hasNoContexts = contexts.length === 0;
 
   return (
     <>
@@ -97,7 +111,7 @@ export default function Generator() {
         <h1 className="page-title">Convierte una idea en un texto listo para publicar</h1>
         <p className="page-subtitle">
           Elige el dolor del cliente, el formato y, si quieres, añade una idea. La IA usa el
-          contexto del negocio que tengas guardado para generar el texto.
+          contexto principal del negocio para generar el texto.
         </p>
       </header>
 
@@ -107,11 +121,33 @@ export default function Generator() {
         </div>
       )}
 
+      {hasNoContexts && (
+        <div className="banner banner-info" style={{ marginBottom: "1.5rem" }}>
+          No tienes contextos del negocio configurados.{" "}
+          <Link to="/ajustes/nuevo" style={{ textDecoration: "underline", fontWeight: 600 }}>
+            Crea al menos uno para que la IA tenga información sobre tu marca.
+          </Link>
+        </div>
+      )}
+
       {hasNoPains && (
         <div className="banner banner-info" style={{ marginBottom: "1.5rem" }}>
           No tienes dolores del cliente configurados.{" "}
           <Link to="/ajustes/dolores" style={{ textDecoration: "underline", fontWeight: 600 }}>
             Crea al menos uno para empezar a generar contenido.
+          </Link>
+        </div>
+      )}
+
+      {primaryContext && (
+        <div className="banner banner-info" style={{ marginBottom: "1.5rem" }}>
+          Generando para: <strong>{primaryContext.name}</strong>
+          {primaryContext.business_name && primaryContext.business_name !== primaryContext.name && (
+            <> ({primaryContext.business_name})</>
+          )}
+          .{" "}
+          <Link to="/ajustes" style={{ textDecoration: "underline" }}>
+            Cambiar contexto principal
           </Link>
         </div>
       )}
@@ -184,13 +220,48 @@ export default function Generator() {
             </section>
           )}
 
+          {otherContexts.length > 0 && (
+            <section className="card">
+              <div className="card-title">Contextos de referencia (opcional)</div>
+              <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
+                Selecciona otros contextos (competidores, otras marcas) para que la IA los conozca.
+                Útil cuando quieres pedirle comparaciones o resaltar ventajas frente a la competencia.
+              </p>
+              <div className="option-grid">
+                {otherContexts.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`option-card ${referenceIds.includes(c.id) ? "selected" : ""}`}
+                    onClick={() => toggleReference(c.id)}
+                    aria-pressed={referenceIds.includes(c.id)}
+                  >
+                    <span className="option-card-label">{c.name}</span>
+                    {c.business_name && (
+                      <span className="option-card-desc">{c.business_name}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {referenceIds.length > 0 && (
+                <p style={{ fontSize: "0.8125rem", color: "var(--color-accent)", marginTop: "0.75rem" }}>
+                  {referenceIds.length} {referenceIds.length === 1 ? "contexto seleccionado" : "contextos seleccionados"} como referencia.
+                </p>
+              )}
+            </section>
+          )}
+
           <section className="card">
             <div className="card-title">Idea, contexto o CTA específico (opcional)</div>
             <div className="field">
               <textarea
                 className="textarea"
                 rows={4}
-                placeholder='Ej: "El CTA debe ser: comenta la palabra ENVÍO y te mandamos nuestras tarifas por DM"'
+                placeholder={
+                  referenceIds.length > 0
+                    ? 'Ej: "Compara con los competidores seleccionados y resalta nuestras ventajas" o "El CTA debe ser: comenta la palabra ENVÍO"'
+                    : 'Ej: "El CTA debe ser: comenta la palabra ENVÍO y te mandamos nuestras tarifas por DM"'
+                }
                 value={extraIdea}
                 onChange={(e) => setExtraIdea(e.target.value)}
                 maxLength={2000}

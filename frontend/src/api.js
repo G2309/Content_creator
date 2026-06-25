@@ -86,9 +86,16 @@ export const api = {
   getFormats: () => request("/api/catalogs/formats"),
   getHooks: () => request("/api/catalogs/hooks"),
 
-  getContext: () => request("/api/context"),
-  updateContext: (data) =>
-    request("/api/context", { method: "PUT", body: data }),
+  getContexts: () => request("/api/contexts"),
+  getContext: (id) => request(`/api/contexts/${id}`),
+  createContext: (data) =>
+    request("/api/contexts", { method: "POST", body: data }),
+  updateContext: (id, data) =>
+    request(`/api/contexts/${id}`, { method: "PUT", body: data }),
+  setPrimaryContext: (id) =>
+    request(`/api/contexts/${id}/set-primary`, { method: "POST" }),
+  deleteContext: (id) =>
+    request(`/api/contexts/${id}`, { method: "DELETE" }),
 
   generate: (payload) =>
     request("/api/content/generate", { method: "POST", body: payload }),
