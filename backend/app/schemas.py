@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+InsightCategory = Literal["pain", "desire", "fear", "story"]
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -94,18 +96,31 @@ class PainPublic(BaseModel):
     id: int
     label: str
     description: str
+    category: InsightCategory
     position: int
 
 
 class PainCreate(BaseModel):
     label: str = Field(min_length=2, max_length=255)
-    description: str = Field(default="", max_length=1000)
+    description: str = Field(default="", max_length=2000)
+    category: InsightCategory = "pain"
 
 
 class PainUpdate(BaseModel):
     label: str = Field(min_length=2, max_length=255)
-    description: str = Field(default="", max_length=1000)
+    description: str = Field(default="", max_length=2000)
+    category: InsightCategory = "pain"
     position: int | None = None
+
+
+class SuggestedInsightItem(BaseModel):
+    label: str
+    description: str
+    category: InsightCategory
+
+
+class ImportInsightsRequest(BaseModel):
+    items: list[SuggestedInsightItem] = Field(min_length=1, max_length=200)
 
 
 class GenerateRequest(BaseModel):
@@ -121,6 +136,7 @@ class GenerateResponse(BaseModel):
     content: str
     pain_id: int
     pain_label: str
+    pain_category: InsightCategory
     format_id: str
     format_label: str
     hook_id: str = ""

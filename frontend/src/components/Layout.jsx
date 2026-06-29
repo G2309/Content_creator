@@ -18,7 +18,7 @@ export default function Layout() {
 
           <div className="sidebar-section">Configuración</div>
           <NavLink to="/ajustes" end>Contextos del negocio</NavLink>
-          <NavLink to="/ajustes/dolores">Dolores del cliente</NavLink>
+          <NavLink to="/ajustes/datos">Datos del cliente</NavLink>
           <NavLink to="/cuenta/password">Cambiar contraseña</NavLink>
 
           {user?.is_admin && (

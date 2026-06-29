@@ -27,8 +27,9 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str
     anthropic_model: str = "claude-haiku-4-5-20251001"
+    anthropic_model_guion: str = "claude-sonnet-4-6"
     anthropic_max_tokens: int = 1024
-    anthropic_timeout_seconds: float = 20.0
+    anthropic_timeout_seconds: float = 30.0
 
     cors_origins: str = ""
 

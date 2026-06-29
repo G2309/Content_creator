@@ -2,6 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 
+const CATEGORY_LABELS = {
+  pain: "Dolor",
+  desire: "Deseo",
+  fear: "Miedo",
+  story: "Historia",
+};
+
+const CATEGORY_ORDER = ["pain", "desire", "fear", "story"];
+
 export default function Generator() {
   const [pains, setPains] = useState([]);
   const [formats, setFormats] = useState([]);
@@ -13,6 +22,7 @@ export default function Generator() {
   const [selectedHook, setSelectedHook] = useState("");
   const [referenceIds, setReferenceIds] = useState([]);
   const [extraIdea, setExtraIdea] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,6 +46,21 @@ export default function Generator() {
   const isGuionVideo = selectedFormat === "guion_video";
   const primaryContext = contexts.find((c) => c.is_primary);
   const otherContexts = contexts.filter((c) => !c.is_primary);
+
+  const availableCategories = useMemo(() => {
+    const set = new Set(pains.map((p) => p.category));
+    return CATEGORY_ORDER.filter((c) => set.has(c));
+  }, [pains]);
+
+  const filteredPains = useMemo(() => {
+    if (categoryFilter === "all") return pains;
+    return pains.filter((p) => p.category === categoryFilter);
+  }, [pains, categoryFilter]);
+
+  const selectedPainObj = useMemo(
+    () => pains.find((p) => p.id === selectedPain),
+    [pains, selectedPain]
+  );
 
   const canGenerate = useMemo(() => {
     if (selectedPain === null || !selectedFormat || loading) return false;
@@ -110,16 +135,12 @@ export default function Generator() {
         <div className="page-eyebrow">Paso 1 — Generar</div>
         <h1 className="page-title">Convierte una idea en un texto listo para publicar</h1>
         <p className="page-subtitle">
-          Elige el dolor del cliente, el formato y, si quieres, añade una idea. La IA usa el
-          contexto principal del negocio para generar el texto.
+          Elige un ángulo (dolor, deseo, miedo o historia), el formato y, si quieres, añade una idea.
+          La IA usa el contexto principal del negocio para generar el texto.
         </p>
       </header>
 
-      {error && (
-        <div className="banner banner-error" style={{ marginBottom: "1.5rem" }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="banner banner-error" style={{ marginBottom: "1.5rem" }}>{error}</div>}
 
       {hasNoContexts && (
         <div className="banner banner-info" style={{ marginBottom: "1.5rem" }}>
@@ -132,9 +153,9 @@ export default function Generator() {
 
       {hasNoPains && (
         <div className="banner banner-info" style={{ marginBottom: "1.5rem" }}>
-          No tienes dolores del cliente configurados.{" "}
-          <Link to="/ajustes/dolores" style={{ textDecoration: "underline", fontWeight: 600 }}>
-            Crea al menos uno para empezar a generar contenido.
+          No tienes datos del cliente configurados.{" "}
+          <Link to="/ajustes/datos" style={{ textDecoration: "underline", fontWeight: 600 }}>
+            Crea o importa al menos uno para empezar a generar contenido.
           </Link>
         </div>
       )}
@@ -155,9 +176,37 @@ export default function Generator() {
       <div className="generator-grid">
         <div className="generator-controls">
           <section className="card">
-            <div className="card-title">Dolor del cliente</div>
+            <div className="card-title">Ángulo a usar</div>
+
+            {availableCategories.length > 1 && (
+              <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+                <button
+                  type="button"
+                  className={`chip ${categoryFilter === "all" ? "" : "chip-neutral"}`}
+                  onClick={() => setCategoryFilter("all")}
+                  style={{ cursor: "pointer", border: "none", padding: "0.35rem 0.75rem" }}
+                >
+                  Todos ({pains.length})
+                </button>
+                {availableCategories.map((c) => {
+                  const count = pains.filter((p) => p.category === c).length;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`chip ${categoryFilter === c ? "" : "chip-neutral"}`}
+                      onClick={() => setCategoryFilter(c)}
+                      style={{ cursor: "pointer", border: "none", padding: "0.35rem 0.75rem" }}
+                    >
+                      {CATEGORY_LABELS[c]} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="option-grid">
-              {pains.map((p) => (
+              {filteredPains.map((p) => (
                 <button
                   key={p.id}
                   type="button"
@@ -165,7 +214,14 @@ export default function Generator() {
                   onClick={() => setSelectedPain(p.id)}
                   aria-pressed={selectedPain === p.id}
                 >
-                  <span className="option-card-label">{p.label}</span>
+                  <span className="option-card-label">
+                    {p.label}
+                    {p.category !== "pain" && (
+                      <span className="chip chip-neutral" style={{ marginLeft: "0.5rem", fontSize: "0.6875rem" }}>
+                        {CATEGORY_LABELS[p.category]}
+                      </span>
+                    )}
+                  </span>
                   {p.description && (
                     <span className="option-card-desc">{p.description}</span>
                   )}
@@ -198,8 +254,8 @@ export default function Generator() {
             <section className="card">
               <div className="card-title">Tipo de gancho</div>
               <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
-                Elige cómo quieres que arranque el guion. El gancho marca los primeros 2 segundos —
-                lo que decide si la gente se queda o sigue de largo.
+                Elige cómo arranca el guion. El gancho decide los primeros 2 segundos —
+                si la gente se queda o sigue de largo.
               </p>
               <div className="option-grid">
                 {hooks.map((h) => (
@@ -225,7 +281,7 @@ export default function Generator() {
               <div className="card-title">Contextos de referencia (opcional)</div>
               <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
                 Selecciona otros contextos (competidores, otras marcas) para que la IA los conozca.
-                Útil cuando quieres pedirle comparaciones o resaltar ventajas frente a la competencia.
+                Útil para pedirle comparaciones o resaltar ventajas frente a la competencia.
               </p>
               <div className="option-grid">
                 {otherContexts.map((c) => (
@@ -272,11 +328,7 @@ export default function Generator() {
             </div>
 
             <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.5rem" }}>
-              <button
-                className="btn btn-primary"
-                onClick={() => run(false)}
-                disabled={!canGenerate}
-              >
+              <button className="btn btn-primary" onClick={() => run(false)} disabled={!canGenerate}>
                 {loading ? <span className="spinner" /> : null}
                 {loading ? "Generando…" : "Generar texto"}
               </button>
@@ -284,6 +336,11 @@ export default function Generator() {
             {isGuionVideo && !selectedHook && (
               <p style={{ fontSize: "0.8125rem", color: "var(--color-text-subtle)", marginTop: "0.5rem" }}>
                 Selecciona un tipo de gancho para poder generar.
+              </p>
+            )}
+            {isGuionVideo && (
+              <p style={{ fontSize: "0.75rem", color: "var(--color-text-subtle)", marginTop: "0.5rem", fontStyle: "italic" }}>
+                Para guion de video se usa un modelo más potente (Sonnet) — tarda un poco más pero el resultado es notablemente mejor.
               </p>
             )}
           </section>
@@ -307,6 +364,11 @@ export default function Generator() {
             {result && !loading && (
               <>
                 <div className="result-content">{result.content}</div>
+                {result.model && (
+                  <div style={{ fontSize: "0.6875rem", color: "var(--color-text-subtle)", marginTop: "0.5rem", textAlign: "right", fontFamily: "var(--font-mono)" }}>
+                    modelo: {result.model}
+                  </div>
+                )}
                 {savedNotice && (
                   <div className="banner banner-success" style={{ marginTop: "1rem" }}>
                     Guardado en la biblioteca.
@@ -316,19 +378,11 @@ export default function Generator() {
                   <button className="btn btn-secondary" onClick={copy}>
                     {copied ? "Copiado ✓" : "Copiar"}
                   </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={saveToLibrary}
-                    disabled={saving}
-                  >
+                  <button className="btn btn-secondary" onClick={saveToLibrary} disabled={saving}>
                     {saving ? <span className="spinner" /> : null}
                     {saving ? "Guardando…" : "Guardar en biblioteca"}
                   </button>
-                  <button
-                    className="btn btn-ghost"
-                    onClick={() => run(true)}
-                    disabled={!canGenerate}
-                  >
+                  <button className="btn btn-ghost" onClick={() => run(true)} disabled={!canGenerate}>
                     Regenerar
                   </button>
                 </div>

@@ -77,8 +77,11 @@ export const api = {
   deleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE" }),
 
   getPains: () => request("/api/pains"),
-  createPain: (label, description) =>
-    request("/api/pains", { method: "POST", body: { label, description } }),
+  getSuggestedInsights: () => request("/api/pains/suggested"),
+  importInsights: (items) =>
+    request("/api/pains/import", { method: "POST", body: { items } }),
+  createPain: (label, description, category = "pain") =>
+    request("/api/pains", { method: "POST", body: { label, description, category } }),
   updatePain: (id, payload) =>
     request(`/api/pains/${id}`, { method: "PUT", body: payload }),
   deletePain: (id) => request(`/api/pains/${id}`, { method: "DELETE" }),

@@ -8,7 +8,7 @@ import ContextEdit from "./pages/ContextEdit.jsx";
 import Users from "./pages/Users.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx";
 import Library from "./pages/Library.jsx";
-import Pains from "./pages/Pains.jsx";
+import CustomerData from "./pages/CustomerData.jsx";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -46,24 +46,16 @@ function AdminOnly({ children }) {
 export default function App() {
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={<PublicOnly><Login /></PublicOnly>}
-      />
-      <Route
-        path="/cambiar-password"
-        element={<PasswordChangeRoute><ChangePassword forced /></PasswordChangeRoute>}
-      />
-      <Route
-        path="/"
-        element={<ProtectedRoute><Layout /></ProtectedRoute>}
-      >
+      <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+      <Route path="/cambiar-password" element={<PasswordChangeRoute><ChangePassword forced /></PasswordChangeRoute>} />
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Generator />} />
         <Route path="biblioteca" element={<Library />} />
         <Route path="ajustes" element={<Contexts />} />
         <Route path="ajustes/nuevo" element={<ContextEdit />} />
         <Route path="ajustes/contexto/:id" element={<ContextEdit />} />
-        <Route path="ajustes/dolores" element={<Pains />} />
+        <Route path="ajustes/datos" element={<CustomerData />} />
+        <Route path="ajustes/dolores" element={<Navigate to="/ajustes/datos" replace />} />
         <Route path="cuenta/password" element={<ChangePassword />} />
         <Route path="usuarios" element={<AdminOnly><Users /></AdminOnly>} />
         <Route path="*" element={<Navigate to="/" replace />} />

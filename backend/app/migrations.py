@@ -89,6 +89,19 @@ def ensure_schema(engine: Engine, admin_email: str | None = None) -> None:
                 AND is_primary = FALSE
             """))
 
+        pains_exists = conn.execute(
+            text("SELECT to_regclass('public.customer_pains') IS NOT NULL")
+        ).scalar()
+        if pains_exists:
+            conn.execute(text(
+                "ALTER TABLE customer_pains "
+                "ADD COLUMN IF NOT EXISTS category VARCHAR(32) NOT NULL DEFAULT 'pain'"
+            ))
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_customer_pains_category "
+                "ON customer_pains (category)"
+            ))
+
     logger.info("Migración de esquema aplicada.")
 
 
@@ -106,6 +119,7 @@ def seed_default_pains_for_existing_users(db: Session) -> None:
                 user_id=user.id,
                 label=pain_data["label"],
                 description=pain_data["description"],
+                category="pain",
                 position=idx,
             ))
         logger.info("Dolores por defecto sembrados para usuario %s", user.email)

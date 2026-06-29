@@ -19,28 +19,35 @@ _client = anthropic.Anthropic(
 
 
 GUION_VIDEO_INSTRUCTION = (
-    "Genera un GUION para video de Instagram (Reel largo o video de feed) "
-    "que dure entre 1 y 3 minutos hablados — entre 200 y 450 palabras aproximadamente. "
-    "NO devuelvas un texto corto: si te queda menos de 200 palabras, sigue desarrollando.\n\n"
+    "Genera un GUION para Reel o video corto de Instagram. Duración objetivo: 1 a 3 minutos hablados "
+    "(entre 200 y 450 palabras). Si te queda menos de 200, sigue desarrollando hasta cumplir.\n\n"
+    "REGLAS DE PACING (las más importantes — Instagram premia la rapidez emocional):\n"
+    "- Frases CORTAS, ritmo Reel. Sin párrafos largos ni subordinadas. Una idea por línea.\n"
+    "- El dolor y la consecuencia económica deben aparecer en los PRIMEROS 15 segundos del guion.\n"
+    "- NO más de 3 frases de contexto antes de revelar la consecuencia o la pérdida.\n"
+    "- Mientras más cifras concretas de dinero, mejor (ej: '$2,500 cotizados → $3,200 pagados').\n"
+    "- El 'culpable' debe ser claro y específico (el sistema, una práctica común, una empresa tipo) — "
+    "NO una situación abstracta o impersonal.\n"
+    "- Incluye al menos UN 'momento de revelación' — un dato concreto que haga al espectador pensar "
+    "'no sabía eso' o 'eso me podría pasar'.\n\n"
     "ESTRUCTURA OBLIGATORIA — marca cada sección con su nombre en MAYÚSCULAS:\n\n"
     "HOOK:\n"
-    "Una sola línea muy fuerte que detenga el scroll en los primeros 2 segundos. "
-    "Sigue ESTRICTAMENTE la instrucción del tipo de gancho elegido.\n\n"
-    "PROBLEMA (70% del guion — la sección más larga):\n"
-    "Desarrolla el dolor PROFUNDAMENTE. Esta es la parte más extensa, donde generas "
-    "tensión emocional y amplificas las consecuencias del problema. Toca el problema "
-    "desde varios ángulos: cómo se siente, qué se pierde, qué pasa cuando se ignora, "
-    "casos concretos donde aparece. NO basta con describirlo — el espectador debe "
-    "incomodarse e identificarse. Usa frases cortas y directas para sonar natural al hablar.\n\n"
-    "ENSEÑANZA / MORALEJA (20% del guion):\n"
-    "La lección que se desprende del problema. Qué patrón hay detrás, qué tendría que "
-    "cambiar de mentalidad la audiencia para no caer en esto. No es la solución todavía, "
-    "es la reflexión que conecta el dolor con el aprendizaje.\n\n"
-    "SOLUCIÓN (10% del guion — la parte más breve):\n"
-    "Recién aquí presentas cómo se resuelve. Concreto, sin extenderse. "
-    "Es el alivio después del dolor, no un sermón comercial.\n\n"
+    "Una sola línea. Debe amenazar una pérdida concreta o golpear con un hecho específico en menos "
+    "de 3 segundos. Sigue ESTRICTAMENTE la instrucción del tipo de gancho elegido. "
+    "Si en el ángulo del cliente hay una cifra de dinero, úsala aquí.\n\n"
+    "PROBLEMA (núcleo del guion, 60-70% del texto):\n"
+    "Empieza con la CONSECUENCIA, no con el contexto. Después contextualiza. "
+    "Desarrolla con micro-conflictos: situaciones concretas, momentos específicos. "
+    "Usa frases cortas, secuenciales, cada una añadiendo presión. "
+    "Nombra al culpable claramente (la industria, la práctica común, el competidor genérico).\n\n"
+    "ENSEÑANZA / MORALEJA (15-20% del texto):\n"
+    "Una línea de transición que conecta el dolor con un cambio de mentalidad. "
+    "Qué tendría que ENTENDER el espectador para no caer en esto. No es la solución todavía.\n\n"
+    "SOLUCIÓN (10% del texto — la parte más breve):\n"
+    "Cómo se resuelve, concreto y rápido. Sin sermón comercial. "
+    "Es el alivio después del dolor.\n\n"
     "CTA:\n"
-    "Una línea final accionable que conecte con la audiencia."
+    "Una línea final accionable. Si el usuario te dio un CTA específico, úsalo literal."
 )
 
 
@@ -48,7 +55,7 @@ FORMAT_INSTRUCTIONS: dict[str, str] = {
     "guion_video": GUION_VIDEO_INSTRUCTION,
     "caption_post": (
         "Genera un CAPTION para post o reel de Instagram. "
-        "Primera línea = gancho fuerte que detenga el scroll. "
+        "Primera línea = gancho fuerte que detenga el scroll, idealmente con cifra de dinero si aplica. "
         "Cuerpo: 3-5 líneas cortas, separadas para legibilidad móvil. "
         "Cierra con un CTA claro. "
         "Agrega 5-8 hashtags relevantes al final, en una sola línea."
@@ -60,9 +67,35 @@ FORMAT_INSTRUCTIONS: dict[str, str] = {
     ),
     "anuncio_pagado": (
         "Genera un COPY para ANUNCIO PAGADO de Instagram. "
-        "Estructura: gancho con dolor concreto, beneficio principal, "
+        "Estructura: gancho con dolor o pérdida económica concreta, beneficio principal, "
         "prueba o autoridad, y un CTA fuerte orientado a conversión. "
         "Tono persuasivo pero honesto, sin clickbait. Máximo 80 palabras."
+    ),
+}
+
+
+CATEGORY_FRAMING = {
+    "pain": (
+        "El ángulo elegido es un DOLOR del cliente. Tu objetivo es amplificar la incomodidad "
+        "y que el espectador se sienta identificado con ese problema. Usa cifras de dinero "
+        "perdido si aplica."
+    ),
+    "desire": (
+        "El ángulo elegido es un DESEO del cliente. Tu objetivo es pintar vívidamente el "
+        "resultado deseado para que el espectador lo quiera. Pero empieza por el contraste: "
+        "la pérdida actual por NO tenerlo, antes de revelar cómo se logra."
+    ),
+    "fear": (
+        "El ángulo elegido es un MIEDO del cliente. Tu objetivo es activar ese miedo de forma "
+        "concreta, con un escenario específico, no abstracto. Mientras más visceral y cercano, "
+        "mejor detendrá el scroll."
+    ),
+    "story": (
+        "El ángulo elegido es una HISTORIA real del negocio. Tu objetivo es contarla con un "
+        "arco emocional: situación → tensión → decisión → desenlace → moraleja. "
+        "Es la historia la que carga el mensaje. No es un dolor del cliente — es un momento "
+        "del negocio que demuestra carácter, aprendizaje o valor. El hook puede ser una "
+        "confesión, una contradicción o un titular sorprendente sobre la historia."
     ),
 }
 
@@ -90,19 +123,30 @@ def _build_system_prompt(
     reference_contexts: list[BusinessContext] | None = None,
 ) -> str:
     parts = [
-        "Eres un copywriter experto en contenido orgánico y publicitario para Instagram en español.",
-        "Tu trabajo es generar textos listos para publicar, sin meta-comentarios ni explicaciones.",
-        "NO escribas frases como 'Aquí tienes', 'Espero te sirva' o similares. Devuelve solo el contenido pedido.",
+        "Eres un copywriter experto en contenido orgánico y publicitario para Instagram en español, "
+        "con foco en RETENCIÓN y SCROLL-STOPPING, no en claridad informativa.",
+        "Generas textos listos para publicar, sin meta-comentarios, sin explicaciones, sin disclaimers.",
+        "NO escribes frases como 'Aquí tienes', 'Espero te sirva' o similares.",
         "",
-        "REGLAS CRÍTICAS:",
-        "- Si el usuario te da una IDEA O CONTEXTO ADICIONAL, debes incorporarla LITERALMENTE en el resultado.",
-        "- Si esa idea adicional contiene un CTA específico (ej. 'comenta la palabra X y te enviamos info'), "
-        "ese CTA debe aparecer textualmente al final, sin reformularlo ni reemplazarlo por uno genérico.",
-        "- Si la idea adicional menciona una promoción, fecha, palabra clave o detalle concreto, "
-        "ese detalle debe aparecer en el contenido final.",
+        "PRINCIPIOS QUE DEBES SEGUIR SIEMPRE:",
+        "- Primero el dolor o la pérdida concreta. Después el contexto. Nunca al revés.",
+        "- Cifras de dinero específicas siempre vencen a descripciones abstractas. "
+        "'$2,500 → $3,200' impacta más que 'cargos sorpresa'.",
+        "- Frases cortas. Una idea por línea. Ritmo de Reel.",
+        "- El culpable debe ser identificable: 'la industria de paqueteros tradicionales', "
+        "'el sistema de cotización opaco', no 'las situaciones inesperadas'.",
+        "- Contraste emocional: el dolor debe ser visceral, la solución debe ser un alivio sentido.",
+        "- Optimizas para que el espectador piense 'no sabía eso', 'eso me podría pasar' o "
+        "'eso ya me pasó' — NO para que aprenda algo nuevo intelectualmente.",
+        "",
+        "REGLAS DE INSTRUCCIONES DEL USUARIO:",
+        "- Si el usuario te da una IDEA O CONTEXTO ADICIONAL, debes incorporarla LITERALMENTE.",
+        "- Si esa idea contiene un CTA específico (ej. 'comenta la palabra X y te enviamos info'), "
+        "ese CTA debe aparecer textualmente al final, sin reformularlo.",
+        "- Si menciona una promoción, fecha, palabra clave o cifra concreta, debe aparecer textualmente.",
         "",
         "CONTEXTO DEL NEGOCIO PARA EL QUE ESCRIBES (este es el negocio principal, "
-        "el contenido debe sonar a su voz y resolver sus objetivos):",
+        "el contenido suena a su voz y resuelve sus objetivos):",
     ]
 
     has_primary_data = any([
@@ -141,6 +185,7 @@ def _build_system_prompt(
 def _build_user_prompt(
     pain_label: str,
     pain_description: str,
+    pain_category: str,
     format_id: str,
     format_label: str,
     hook_label: str,
@@ -152,9 +197,21 @@ def _build_user_prompt(
         format_id,
         f"Genera contenido en el formato: {format_label}.",
     )
+    framing = CATEGORY_FRAMING.get(pain_category, CATEGORY_FRAMING["pain"])
+
+    category_labels = {
+        "pain": "DOLOR",
+        "desire": "DESEO",
+        "fear": "MIEDO",
+        "story": "HISTORIA REAL DEL NEGOCIO",
+    }
+    cat_label = category_labels.get(pain_category, "DOLOR")
+
     parts = [
-        f"DOLOR DEL CLIENTE A ATACAR: {pain_label}.",
-        f"Detalle del dolor: {pain_description or '—'}",
+        f"ÁNGULO A USAR ({cat_label}): {pain_label}.",
+        f"Detalle del ángulo: {pain_description or '—'}",
+        "",
+        f"CÓMO USAR ESTE ÁNGULO: {framing}",
         "",
         f"FORMATO: {instruction}",
     ]
@@ -174,15 +231,14 @@ def _build_user_prompt(
             "=== FIN DE LA IDEA ADICIONAL ===",
             "",
             "Esta idea adicional NO es opcional. Si contiene un CTA, una promoción, una palabra clave "
-            "o cualquier dato específico, DEBE aparecer textualmente en el contenido final. "
-            "Si pide comparar con un contexto de referencia, hazlo usando los datos disponibles.",
+            "o cualquier dato específico, DEBE aparecer textualmente en el contenido final.",
         ])
 
     if variation:
         parts.extend([
             "",
             "Esta es una REGENERACIÓN: ofrece un ángulo claramente distinto al que daría "
-            "una primera versión obvia. Cambia el enfoque, la metáfora o el ejemplo principal — "
+            "una primera versión obvia. Cambia el hook, el enfoque, el ejemplo o la metáfora — "
             "pero mantén el tipo de gancho elegido y respeta la idea adicional del usuario si la hay.",
         ])
     parts.extend(["", "Devuelve únicamente el texto final, sin encabezados ni notas."])
@@ -195,27 +251,32 @@ def generate_content(
     reference_contexts: list[BusinessContext] | None = None,
     pain_label: str,
     pain_description: str,
+    pain_category: str = "pain",
     format_id: str,
     format_label: str,
     hook_label: str = "",
     hook_instruction: str = "",
     extra_idea: str = "",
     variation: bool = False,
-) -> str:
+) -> tuple[str, str]:
     system = _build_system_prompt(business_context, reference_contexts)
     user_msg = _build_user_prompt(
-        pain_label, pain_description, format_id, format_label,
+        pain_label, pain_description, pain_category,
+        format_id, format_label,
         hook_label, hook_instruction, extra_idea, variation,
     )
-    temperature = 1.0 if variation else 0.8
+    temperature = 1.0 if variation else 0.85
 
-    max_tokens = settings.anthropic_max_tokens
     if format_id == "guion_video":
-        max_tokens = max(max_tokens, 2048)
+        model = settings.anthropic_model_guion
+        max_tokens = 2048
+    else:
+        model = settings.anthropic_model
+        max_tokens = settings.anthropic_max_tokens
 
     try:
         response = _client.messages.create(
-            model=settings.anthropic_model,
+            model=model,
             max_tokens=max_tokens,
             temperature=temperature,
             system=system,
@@ -229,7 +290,8 @@ def generate_content(
         raise
 
     text_parts = [block.text for block in response.content if block.type == "text"]
-    return "\n".join(text_parts).strip()
+    content = "\n".join(text_parts).strip()
+    return content, model
 
 
 CONTEXT_EXTRACTION_SYSTEM = (

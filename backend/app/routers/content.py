@@ -27,7 +27,7 @@ def generate(
 ) -> GenerateResponse:
     pain = db.get(CustomerPain, payload.pain_id)
     if not pain or pain.user_id != current_user.id:
-        raise HTTPException(status_code=400, detail="Dolor del cliente no válido.")
+        raise HTTPException(status_code=400, detail="Ángulo no válido.")
 
     format_item = get_format_by_id(payload.format_id)
     if not format_item:
@@ -43,9 +43,7 @@ def generate(
 
     reference_contexts: list[BusinessContext] = []
     if payload.reference_context_ids:
-        clean_ids = [
-            i for i in payload.reference_context_ids if i != primary_ctx.id
-        ]
+        clean_ids = [i for i in payload.reference_context_ids if i != primary_ctx.id]
         if clean_ids:
             reference_contexts = (
                 db.query(BusinessContext)
@@ -57,11 +55,12 @@ def generate(
             )
 
     try:
-        content = generate_content(
+        content, model_used = generate_content(
             business_context=primary_ctx,
             reference_contexts=reference_contexts,
             pain_label=pain.label,
             pain_description=pain.description,
+            pain_category=pain.category,
             format_id=format_item.id,
             format_label=format_item.label,
             hook_label=hook["label"] if hook else "",
@@ -102,9 +101,10 @@ def generate(
         content=content,
         pain_id=pain.id,
         pain_label=pain.label,
+        pain_category=pain.category,
         format_id=format_item.id,
         format_label=format_item.label,
         hook_id=hook["id"] if hook else "",
         hook_label=hook["label"] if hook else "",
-        model=settings.anthropic_model,
+        model=model_used,
     )
