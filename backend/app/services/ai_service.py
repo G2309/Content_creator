@@ -8,6 +8,7 @@ import anthropic
 
 from app.config import get_settings
 from app.models import BusinessContext
+from app.structures import structures_block
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -19,35 +20,43 @@ _client = anthropic.Anthropic(
 
 
 GUION_VIDEO_INSTRUCTION = (
-    "Genera un GUION para Reel o video corto de Instagram. Duración objetivo: 1 a 3 minutos hablados "
-    "(entre 200 y 450 palabras). Si te queda menos de 200, sigue desarrollando hasta cumplir.\n\n"
-    "REGLAS DE PACING (las más importantes — Instagram premia la rapidez emocional):\n"
+    "Genera un GUION para Reel o video corto de Instagram. Duración objetivo: 1 a 3 minutos "
+    "hablados (entre 200 y 450 palabras). Si te queda menos de 200, sigue desarrollando.\n\n"
+    "REGLAS DE PACING (Instagram premia la rapidez emocional):\n"
     "- Frases CORTAS, ritmo Reel. Sin párrafos largos ni subordinadas. Una idea por línea.\n"
-    "- El dolor y la consecuencia económica deben aparecer en los PRIMEROS 15 segundos del guion.\n"
-    "- NO más de 3 frases de contexto antes de revelar la consecuencia o la pérdida.\n"
-    "- Mientras más cifras concretas de dinero, mejor (ej: '$2,500 cotizados → $3,200 pagados').\n"
-    "- El 'culpable' debe ser claro y específico (el sistema, una práctica común, una empresa tipo) — "
-    "NO una situación abstracta o impersonal.\n"
-    "- Incluye al menos UN 'momento de revelación' — un dato concreto que haga al espectador pensar "
-    "'no sabía eso' o 'eso me podría pasar'.\n\n"
-    "ESTRUCTURA OBLIGATORIA — marca cada sección con su nombre en MAYÚSCULAS:\n\n"
-    "HOOK:\n"
-    "Una sola línea. Debe amenazar una pérdida concreta o golpear con un hecho específico en menos "
-    "de 3 segundos. Sigue ESTRICTAMENTE la instrucción del tipo de gancho elegido. "
-    "Si en el ángulo del cliente hay una cifra de dinero, úsala aquí.\n\n"
-    "PROBLEMA (núcleo del guion, 60-70% del texto):\n"
-    "Empieza con la CONSECUENCIA, no con el contexto. Después contextualiza. "
-    "Desarrolla con micro-conflictos: situaciones concretas, momentos específicos. "
-    "Usa frases cortas, secuenciales, cada una añadiendo presión. "
-    "Nombra al culpable claramente (la industria, la práctica común, el competidor genérico).\n\n"
-    "ENSEÑANZA / MORALEJA (15-20% del texto):\n"
-    "Una línea de transición que conecta el dolor con un cambio de mentalidad. "
-    "Qué tendría que ENTENDER el espectador para no caer en esto. No es la solución todavía.\n\n"
-    "SOLUCIÓN (10% del texto — la parte más breve):\n"
-    "Cómo se resuelve, concreto y rápido. Sin sermón comercial. "
-    "Es el alivio después del dolor.\n\n"
+    "- Cada frase debe hacer avanzar el guion. Si una frase se puede borrar sin perder nada, bórrala.\n"
+    "- Cifras concretas siempre vencen a descripciones abstractas.\n"
+    "- El 'culpable' debe ser identificable: una práctica común, el sistema, un tipo de proveedor. "
+    "Nunca una situación abstracta e impersonal.\n\n"
+    "ARQUITECTURA OBLIGATORIA DEL REEL — marca cada sección con su nombre en MAYÚSCULAS.\n"
+    "Las siete secciones van en este orden:\n\n"
+    "INTERRUPCIÓN:\n"
+    "Una sola línea que rompa el scroll en menos de 3 segundos. Sigue ESTRICTAMENTE la "
+    "instrucción del tipo de gancho elegido. No es una introducción: es un golpe.\n\n"
+    "PROMESA:\n"
+    "Una o dos líneas. La razón para quedarse. El espectador debe entender que si sigue viendo "
+    "va a descubrir algo. Tipo: 'y aquí está el problema' o 'te voy a mostrar qué puede pasar'.\n\n"
+    "TENSIÓN:\n"
+    "Aquí NO entregues todavía la respuesta. Construye presión con información incompleta, "
+    "preguntas, contrastes o revelaciones progresivas. Frases cortas y secuenciales, cada una "
+    "subiendo la apuesta. Esta sección es la que decide si el espectador llega al final.\n\n"
+    "DESARROLLO (el núcleo, 40-50% del texto):\n"
+    "Explica solo lo necesario para sostener UNA idea central. Sin tecnicismos innecesarios, "
+    "sin repetir lo ya dicho. Cada frase avanza la historia.\n\n"
+    "PRUEBA:\n"
+    "Demuestra lo que afirmaste. Indica qué evidencia concreta se muestra en cámara: una foto, "
+    "el inventario, la app, la bodega, un caso real, un testimonio. "
+    "No digas 'tenemos control': enseña cómo se ve el control. "
+    "Si no hay evidencia visual posible, usa un caso concreto y específico.\n\n"
+    "RESOLUCIÓN:\n"
+    "El espectador sale con una comprensión nueva más una salida. Es el cambio de creencia "
+    "hecho explícito, en dos o tres líneas.\n\n"
     "CTA:\n"
-    "Una línea final accionable. Si el usuario te dio un CTA específico, úsalo literal."
+    "Una línea final accionable, coherente con el objetivo elegido. "
+    "Si el usuario dio un CTA o una palabra clave específica, úsalo literal.\n\n"
+    "RETENCIÓN: cada pocos segundos debe aparecer al menos uno de estos elementos — información "
+    "nueva, una pregunta, un contraste, una consecuencia, una revelación o una promesa pendiente. "
+    "Si un tramo del guion no tiene ninguno, reescríbelo."
 )
 
 
@@ -97,10 +106,41 @@ CATEGORY_FRAMING = {
         "del negocio que demuestra carácter, aprendizaje o valor. El hook puede ser una "
         "confesión, una contradicción o un titular sorprendente sobre la historia."
     ),
+    "objection": (
+        "El ángulo elegido es una OBJECIÓN que frena la compra. Tu objetivo es desarmarla "
+        "sin sonar defensivo. Nómbrala tal como la diría el cliente, dale la razón en lo que "
+        "tenga de válida, y después muestra lo que no está viendo."
+    ),
+    "myth": (
+        "El ángulo elegido es un MITO que la audiencia da por cierto. Tu objetivo es "
+        "desmontarlo. Enuncia la creencia como si la compartieras, y luego contradícela con "
+        "un hecho concreto. El giro debe sentirse como una revelación, no como un regaño."
+    ),
+    "mistake": (
+        "El ángulo elegido es un ERROR COMÚN. Tu objetivo es que el espectador se reconozca "
+        "cometiéndolo. Descríbelo con detalle específico para que piense 'eso hago yo', "
+        "y después muestra la consecuencia y la corrección."
+    ),
+    "question": (
+        "El ángulo elegido es una PREGUNTA FRECUENTE. Tu objetivo es responderla mejor que "
+        "nadie. Responde primero y explica después. Nada de rodeos previos: la respuesta va "
+        "en las primeras líneas y el resto la sustenta."
+    ),
+    "opportunity": (
+        "El ángulo elegido es una OPORTUNIDAD que el espectador se está perdiendo. "
+        "Tu objetivo es que sienta el costo de no aprovecharla. Sé concreto sobre qué está "
+        "dejando sobre la mesa y qué haría falta para tomarla."
+    ),
+    "case": (
+        "El ángulo elegido es un CASO REAL. Tu objetivo es que funcione como prueba. "
+        "Cuenta qué pasó con detalle específico — cifras, tiempos, qué se hizo — y cierra con "
+        "el principio que deja. La credibilidad está en el detalle, no en el adjetivo."
+    ),
 }
 
 
-def _context_lines(ctx: BusinessContext, label: str) -> list[str]:
+def _context_lines(ctx: BusinessContext, label: str, full: bool = False) -> list[str]:
+    """Bloque de contexto. `full` agrega marca y audiencia — solo para el negocio principal."""
     lines = [f"=== {label}: \"{ctx.name}\" ==="]
     if ctx.business_name.strip():
         lines.append(f"- Nombre: {ctx.business_name.strip()}")
@@ -114,7 +154,52 @@ def _context_lines(ctx: BusinessContext, label: str) -> list[str]:
         lines.append(f"- Propuesta de valor: {ctx.value_proposition.strip()}")
     if ctx.tone.strip():
         lines.append(f"- Tono de voz: {ctx.tone.strip()}")
+
+    if full:
+        if ctx.positioning.strip():
+            lines.append(f"- Posicionamiento: {ctx.positioning.strip()}")
+        if ctx.transformation_before.strip() or ctx.transformation_after.strip():
+            lines.append(
+                f"- Transformación que provoca: de [{ctx.transformation_before.strip() or '—'}] "
+                f"a [{ctx.transformation_after.strip() or '—'}]"
+            )
+        if ctx.differentiators.strip():
+            lines.append(f"- Diferenciadores reales: {ctx.differentiators.strip()}")
+        if ctx.emotional_promise.strip():
+            lines.append(f"- Promesa emocional: {ctx.emotional_promise.strip()}")
+        if ctx.brand_concept.strip():
+            lines.append(f"- Concepto de marca: {ctx.brand_concept.strip()}")
+
     lines.append(f"=== FIN {label} ===")
+    return lines
+
+
+def _beliefs_block(ctx: BusinessContext) -> list[str]:
+    creencias = [b.strip() for b in ctx.beliefs.splitlines() if b.strip()]
+    if not creencias:
+        return []
+    lines = [
+        "",
+        "CREENCIAS QUE EL CONTENIDO DEBE INSTALAR:",
+        "Cada pieza debe empujar UNA de estas creencias. No las enuncies textualmente — "
+        "haz que el espectador llegue solo a esa conclusión.",
+    ]
+    lines.extend(f"{i}. {c}" for i, c in enumerate(creencias, 1))
+    return lines
+
+
+def _audience_block(ctx: BusinessContext) -> list[str]:
+    if not ctx.avatar.strip() and not ctx.anti_avatar.strip():
+        return []
+    lines = ["", "AUDIENCIA:"]
+    if ctx.avatar.strip():
+        lines.append(f"- Le escribes a: {ctx.avatar.strip()}")
+    if ctx.anti_avatar.strip():
+        lines.append(
+            f"- NO le escribes a: {ctx.anti_avatar.strip()}. "
+            "No optimices el contenido para este perfil ni intentes complacerlo. "
+            "Si un argumento solo le sirve a él, quítalo."
+        )
     return lines
 
 
@@ -156,10 +241,21 @@ def _build_system_prompt(
         ctx.target_audience.strip(),
         ctx.value_proposition.strip(),
         ctx.tone.strip(),
+        ctx.positioning.strip(),
+        ctx.transformation_before.strip(),
+        ctx.transformation_after.strip(),
+        ctx.differentiators.strip(),
+        ctx.emotional_promise.strip(),
+        ctx.brand_concept.strip(),
+        ctx.beliefs.strip(),
+        ctx.avatar.strip(),
+        ctx.anti_avatar.strip(),
     ])
 
     if has_primary_data:
-        parts.extend(_context_lines(ctx, "NEGOCIO PRINCIPAL"))
+        parts.extend(_context_lines(ctx, "NEGOCIO PRINCIPAL", full=True))
+        parts.extend(_beliefs_block(ctx))
+        parts.extend(_audience_block(ctx))
     else:
         parts.append("(Sin contexto configurado todavía — escribe de forma genérica pero profesional.)")
 
@@ -192,6 +288,8 @@ def _build_user_prompt(
     hook_instruction: str,
     extra_idea: str,
     variation: bool,
+    objective: dict | None = None,
+    pillar: dict | None = None,
 ) -> str:
     instruction = FORMAT_INSTRUCTIONS.get(
         format_id,
@@ -204,6 +302,12 @@ def _build_user_prompt(
         "desire": "DESEO",
         "fear": "MIEDO",
         "story": "HISTORIA REAL DEL NEGOCIO",
+        "objection": "OBJECIÓN",
+        "myth": "MITO",
+        "mistake": "ERROR COMÚN",
+        "question": "PREGUNTA FRECUENTE",
+        "opportunity": "OPORTUNIDAD",
+        "case": "CASO REAL",
     }
     cat_label = category_labels.get(pain_category, "DOLOR")
 
@@ -212,9 +316,26 @@ def _build_user_prompt(
         f"Detalle del ángulo: {pain_description or '—'}",
         "",
         f"CÓMO USAR ESTE ÁNGULO: {framing}",
-        "",
-        f"FORMATO: {instruction}",
     ]
+
+    if objective:
+        parts.extend([
+            "",
+            f"OBJETIVO DE ESTE CONTENIDO: {objective['label']}.",
+            objective["instruction"],
+        ])
+
+    if pillar:
+        parts.extend([
+            "",
+            f"PILAR DE CONTENIDO: {pillar['label']} — {pillar['description']}",
+            pillar["instruction"],
+        ])
+
+    parts.extend(["", f"FORMATO: {instruction}"])
+
+    if format_id == "guion_video":
+        parts.extend(["", structures_block()])
 
     if hook_instruction:
         parts.extend([
@@ -258,30 +379,34 @@ def generate_content(
     hook_instruction: str = "",
     extra_idea: str = "",
     variation: bool = False,
+    objective: dict | None = None,
+    pillar: dict | None = None,
 ) -> tuple[str, str]:
     system = _build_system_prompt(business_context, reference_contexts)
     user_msg = _build_user_prompt(
         pain_label, pain_description, pain_category,
         format_id, format_label,
         hook_label, hook_instruction, extra_idea, variation,
+        objective=objective, pillar=pillar,
     )
-    temperature = 1.0 if variation else 0.85
+
+    kwargs: dict = {"system": system, "messages": [{"role": "user", "content": user_msg}]}
 
     if format_id == "guion_video":
-        model = settings.anthropic_model_guion
-        max_tokens = 2048
+        # Sonnet 5: razona antes de escribir. Rechaza temperature con 400, así que
+        # la variedad entre versiones se pide por prompt (flag `variation`).
+        # max_tokens cubre razonamiento + texto, por eso es holgado.
+        kwargs["model"] = settings.anthropic_model_guion
+        kwargs["max_tokens"] = settings.anthropic_max_tokens_guion
+        kwargs["thinking"] = {"type": "adaptive"}
     else:
-        model = settings.anthropic_model
-        max_tokens = settings.anthropic_max_tokens
+        # Haiku 4.5 para formatos cortos: no soporta thinking adaptativo.
+        kwargs["model"] = settings.anthropic_model
+        kwargs["max_tokens"] = settings.anthropic_max_tokens
+        kwargs["temperature"] = 1.0 if variation else 0.85
 
     try:
-        response = _client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            system=system,
-            messages=[{"role": "user", "content": user_msg}],
-        )
+        response = _client.messages.create(**kwargs)
     except anthropic.APITimeoutError as e:
         logger.warning("Anthropic timeout: %s", e)
         raise
@@ -291,7 +416,7 @@ def generate_content(
 
     text_parts = [block.text for block in response.content if block.type == "text"]
     content = "\n".join(text_parts).strip()
-    return content, model
+    return content, kwargs["model"]
 
 
 CONTEXT_EXTRACTION_SYSTEM = (

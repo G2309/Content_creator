@@ -9,6 +9,8 @@ from app.database import get_db
 from app.deps import get_current_user_active
 from app.hooks import get_hook_by_id
 from app.models import BusinessContext, CustomerPain, User
+from app.objectives import get_objective_by_id
+from app.pillars import get_pillar_by_id
 from app.routers.catalogs import get_format_by_id
 from app.routers.context import get_primary_context
 from app.schemas import GenerateRequest, GenerateResponse
@@ -39,6 +41,15 @@ def generate(
         if not hook:
             raise HTTPException(status_code=400, detail="Tipo de gancho no válido.")
 
+    objective = None
+    if payload.objective_id:
+        objective = get_objective_by_id(payload.objective_id)
+        if not objective:
+            raise HTTPException(status_code=400, detail="Objetivo no válido.")
+
+    # El pilar viene del insight, no lo elige el usuario al generar.
+    pillar = get_pillar_by_id(pain.pillar) if pain.pillar else None
+
     primary_ctx = get_primary_context(db, current_user)
 
     reference_contexts: list[BusinessContext] = []
@@ -67,6 +78,8 @@ def generate(
             hook_instruction=hook["instruction"] if hook else "",
             extra_idea=payload.extra_idea,
             variation=payload.variation,
+            objective=objective,
+            pillar=pillar,
         )
     except anthropic.APITimeoutError:
         raise HTTPException(
@@ -106,5 +119,9 @@ def generate(
         format_label=format_item.label,
         hook_id=hook["id"] if hook else "",
         hook_label=hook["label"] if hook else "",
+        objective_id=objective["id"] if objective else "",
+        objective_label=objective["label"] if objective else "",
+        pillar_id=pillar["id"] if pillar else "",
+        pillar_label=pillar["label"] if pillar else "",
         model=model_used,
     )

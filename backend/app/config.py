@@ -27,9 +27,11 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str
     anthropic_model: str = "claude-haiku-4-5-20251001"
-    anthropic_model_guion: str = "claude-sonnet-4-6"
-    anthropic_max_tokens: int = 1024
-    anthropic_timeout_seconds: float = 30.0
+    anthropic_model_guion: str = "claude-sonnet-5"
+    anthropic_max_tokens: int = 2048
+    # El guion usa razonamiento adaptativo: max_tokens cubre razonar + escribir.
+    anthropic_max_tokens_guion: int = 8000
+    anthropic_timeout_seconds: float = 180.0
 
     cors_origins: str = ""
 

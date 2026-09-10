@@ -177,6 +177,7 @@ class GenerateRequest(BaseModel):
     pain_id: int = Field(ge=1)
     format_id: str = Field(min_length=1, max_length=64)
     hook_id: str = Field(default="", max_length=64)
+    objective_id: str = Field(default="", max_length=64)
     extra_idea: str = Field(default="", max_length=2000)
     variation: bool = False
     reference_context_ids: list[int] = Field(default_factory=list, max_length=10)
@@ -191,6 +192,10 @@ class GenerateResponse(BaseModel):
     format_label: str
     hook_id: str = ""
     hook_label: str = ""
+    objective_id: str = ""
+    objective_label: str = ""
+    pillar_id: str = ""
+    pillar_label: str = ""
     model: str
 
 
