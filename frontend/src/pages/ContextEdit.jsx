@@ -10,6 +10,15 @@ const EMPTY = {
   target_audience: "",
   value_proposition: "",
   tone: "",
+  positioning: "",
+  transformation_before: "",
+  transformation_after: "",
+  differentiators: "",
+  emotional_promise: "",
+  brand_concept: "",
+  beliefs: "",
+  avatar: "",
+  anti_avatar: "",
 };
 
 export default function ContextEdit() {
@@ -42,6 +51,15 @@ export default function ContextEdit() {
           target_audience: ctx.target_audience || "",
           value_proposition: ctx.value_proposition || "",
           tone: ctx.tone || "",
+          positioning: ctx.positioning || "",
+          transformation_before: ctx.transformation_before || "",
+          transformation_after: ctx.transformation_after || "",
+          differentiators: ctx.differentiators || "",
+          emotional_promise: ctx.emotional_promise || "",
+          brand_concept: ctx.brand_concept || "",
+          beliefs: ctx.beliefs || "",
+          avatar: ctx.avatar || "",
+          anti_avatar: ctx.anti_avatar || "",
         });
         setIsPrimary(ctx.is_primary);
       })
@@ -314,6 +332,142 @@ export default function ContextEdit() {
               <span className="field-hint">Una línea describiendo cómo debe sonar el contenido.</span>
             </div>
           </div>
+
+          {(isPrimary || isNew) && (
+            <>
+              <div className="card">
+                <div className="card-title">Identidad de marca</div>
+                <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
+                  Esto es lo que hace que el contenido suene a ti y no a cualquier competidor.
+                  Se llena una vez y la IA lo usa en cada generación.
+                  {!isPrimary && " Solo se aplica si este es tu contexto principal."}
+                </p>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="positioning">Posicionamiento</label>
+                  <textarea
+                    id="positioning"
+                    className="textarea"
+                    rows={3}
+                    value={form.positioning}
+                    onChange={update("positioning")}
+                    maxLength={5000}
+                    placeholder="Quién eres y qué problema resuelves de verdad — no el servicio, el problema."
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="transformation_before">Transformación: antes</label>
+                  <input
+                    id="transformation_before"
+                    className="input"
+                    value={form.transformation_before}
+                    onChange={update("transformation_before")}
+                    maxLength={2000}
+                    placeholder="Cómo llega el cliente. Ej. incertidumbre, errores, estrés."
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="transformation_after">Transformación: después</label>
+                  <input
+                    id="transformation_after"
+                    className="input"
+                    value={form.transformation_after}
+                    onChange={update("transformation_after")}
+                    maxLength={2000}
+                    placeholder="Cómo queda después. Ej. control, información, certeza."
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="differentiators">Diferenciadores reales</label>
+                  <textarea
+                    id="differentiators"
+                    className="textarea"
+                    rows={3}
+                    value={form.differentiators}
+                    onChange={update("differentiators")}
+                    maxLength={5000}
+                    placeholder="Lo que sí tienes y otros no. Cosas concretas, no adjetivos."
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="emotional_promise">Promesa emocional</label>
+                  <input
+                    id="emotional_promise"
+                    className="input"
+                    value={form.emotional_promise}
+                    onChange={update("emotional_promise")}
+                    maxLength={500}
+                    placeholder="Qué siente el cliente al final. Ej. paz y certeza en cada envío."
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="brand_concept">Concepto de marca</label>
+                  <input
+                    id="brand_concept"
+                    className="input"
+                    value={form.brand_concept}
+                    onChange={update("brand_concept")}
+                    maxLength={500}
+                    placeholder="La frase que resume todo. Ej. No vendemos envíos. Vendemos paz."
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="beliefs">Creencias a instalar</label>
+                  <textarea
+                    id="beliefs"
+                    className="textarea"
+                    rows={5}
+                    value={form.beliefs}
+                    onChange={update("beliefs")}
+                    maxLength={5000}
+                    placeholder={"Una por línea. Ej.\nRecibir un paquete no significa que todo esté bien.\nElegir solo por precio puede costar más."}
+                  />
+                  <span className="field-hint">
+                    Una por línea. Cada contenido va a empujar una de estas ideas, sin decirla textualmente.
+                  </span>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-title">Audiencia</div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="avatar">Avatar — a quién le hablas</label>
+                  <textarea
+                    id="avatar"
+                    className="textarea"
+                    rows={3}
+                    value={form.avatar}
+                    onChange={update("avatar")}
+                    maxLength={5000}
+                    placeholder="Tu cliente ideal con detalle: qué hace, qué le importa, qué ya intentó."
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="field-label" htmlFor="anti_avatar">Anti-avatar — a quién NO</label>
+                  <textarea
+                    id="anti_avatar"
+                    className="textarea"
+                    rows={3}
+                    value={form.anti_avatar}
+                    onChange={update("anti_avatar")}
+                    maxLength={5000}
+                    placeholder="El perfil que no quieres atraer. Ej. comprador ocasional que solo busca lo más barato."
+                  />
+                  <span className="field-hint">
+                    Igual de importante que el avatar: la IA deja de escribir para complacer a este perfil.
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="settings-actions">
             <Link to="/ajustes" className="btn btn-ghost">Cancelar</Link>

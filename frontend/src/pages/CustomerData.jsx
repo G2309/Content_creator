@@ -6,9 +6,15 @@ const CATEGORIES = [
   { id: "desire", label: "Deseos", help: "Lo que el cliente quiere lograr o cómo quiere sentirse." },
   { id: "fear", label: "Miedos", help: "Lo que el cliente teme que pase si toma una mala decisión." },
   { id: "story", label: "Historias", help: "Anécdotas reales del negocio: éxitos, errores asumidos, momentos clave." },
+  { id: "objection", label: "Objeciones", help: "Lo que el cliente dice para no contratar. Ej. \"seguro hay más barato\"." },
+  { id: "myth", label: "Mitos", help: "Creencias falsas que la gente da por ciertas sobre tu sector." },
+  { id: "mistake", label: "Errores comunes", help: "Equivocaciones que comete la gente y le salen caras." },
+  { id: "question", label: "Preguntas frecuentes", help: "Lo que te preguntan una y otra vez." },
+  { id: "opportunity", label: "Oportunidades", help: "Lo que el cliente se está perdiendo sin saberlo." },
+  { id: "case", label: "Casos reales", help: "Situaciones concretas que resolviste, con datos." },
 ];
 
-const EMPTY_FORM = { label: "", description: "", category: "pain" };
+const EMPTY_FORM = { label: "", description: "", category: "pain", pillar: "" };
 
 function categoryLabel(id) {
   return CATEGORIES.find((c) => c.id === id)?.label || id;
@@ -16,6 +22,7 @@ function categoryLabel(id) {
 
 export default function CustomerData() {
   const [items, setItems] = useState([]);
+  const [pillars, setPillars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("pain");
@@ -39,6 +46,10 @@ export default function CustomerData() {
   };
 
   useEffect(() => {
+    api.getPillars().then(setPillars).catch(() => setPillars([]));
+  }, []);
+
+  useEffect(() => {
     load();
   }, []);
 
@@ -48,7 +59,7 @@ export default function CustomerData() {
   );
 
   const countsByCategory = useMemo(() => {
-    const counts = { pain: 0, desire: 0, fear: 0, story: 0 };
+    const counts = Object.fromEntries(CATEGORIES.map((c) => [c.id, 0]));
     items.forEach((i) => {
       if (counts[i.category] !== undefined) counts[i.category] += 1;
     });
@@ -61,6 +72,7 @@ export default function CustomerData() {
       label: item.label,
       description: item.description,
       category: item.category,
+      pillar: item.pillar || "",
     });
     setActiveTab(item.category);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -82,9 +94,10 @@ export default function CustomerData() {
           label: form.label.trim(),
           description: form.description.trim(),
           category: form.category,
+          pillar: form.pillar,
         });
       } else {
-        await api.createPain(form.label.trim(), form.description.trim(), form.category);
+        await api.createPain(form.label.trim(), form.description.trim(), form.category, form.pillar);
       }
       setForm({ ...EMPTY_FORM, category: activeTab });
       setEditingId(null);
@@ -186,6 +199,24 @@ export default function CustomerData() {
               <option key={c.id} value={c.id}>{c.label}</option>
             ))}
           </select>
+        </div>
+
+        <div className="field">
+          <label className="field-label">Pilar de contenido (opcional)</label>
+          <select
+            className="input"
+            value={form.pillar}
+            onChange={(e) => setForm({ ...form, pillar: e.target.value })}
+          >
+            <option value="">Sin pilar</option>
+            {pillars.map((p) => (
+              <option key={p.id} value={p.id}>{p.label}</option>
+            ))}
+          </select>
+          <span className="field-hint">
+            {pillars.find((p) => p.id === form.pillar)?.description ||
+             "En qué territorio de contenido juega esta idea. Ayuda a que la IA le dé el enfoque correcto."}
+          </span>
         </div>
 
         <div className="field">

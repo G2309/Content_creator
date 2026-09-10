@@ -80,14 +80,16 @@ export const api = {
   getSuggestedInsights: () => request("/api/pains/suggested"),
   importInsights: (items) =>
     request("/api/pains/import", { method: "POST", body: { items } }),
-  createPain: (label, description, category = "pain") =>
-    request("/api/pains", { method: "POST", body: { label, description, category } }),
+  createPain: (label, description, category = "pain", pillar = "") =>
+    request("/api/pains", { method: "POST", body: { label, description, category, pillar } }),
   updatePain: (id, payload) =>
     request(`/api/pains/${id}`, { method: "PUT", body: payload }),
   deletePain: (id) => request(`/api/pains/${id}`, { method: "DELETE" }),
 
   getFormats: () => request("/api/catalogs/formats"),
   getHooks: () => request("/api/catalogs/hooks"),
+  getPillars: () => request("/api/catalogs/pillars"),
+  getObjectives: () => request("/api/catalogs/objectives"),
 
   getContexts: () => request("/api/contexts"),
   getContext: (id) => request(`/api/contexts/${id}`),

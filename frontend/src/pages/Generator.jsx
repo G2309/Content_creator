@@ -7,19 +7,30 @@ const CATEGORY_LABELS = {
   desire: "Deseo",
   fear: "Miedo",
   story: "Historia",
+  objection: "Objeción",
+  myth: "Mito",
+  mistake: "Error",
+  question: "Pregunta",
+  opportunity: "Oportunidad",
+  case: "Caso",
 };
 
-const CATEGORY_ORDER = ["pain", "desire", "fear", "story"];
+const CATEGORY_ORDER = [
+  "pain", "desire", "fear", "story",
+  "objection", "myth", "mistake", "question", "opportunity", "case",
+];
 
 export default function Generator() {
   const [pains, setPains] = useState([]);
   const [formats, setFormats] = useState([]);
   const [hooks, setHooks] = useState([]);
+  const [objectives, setObjectives] = useState([]);
   const [contexts, setContexts] = useState([]);
 
   const [selectedPain, setSelectedPain] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState("");
   const [selectedHook, setSelectedHook] = useState("");
+  const [selectedObjective, setSelectedObjective] = useState("");
   const [referenceIds, setReferenceIds] = useState([]);
   const [extraIdea, setExtraIdea] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -32,12 +43,13 @@ export default function Generator() {
   const [savedNotice, setSavedNotice] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.getPains(), api.getFormats(), api.getHooks(), api.getContexts()])
-      .then(([p, f, h, c]) => {
+    Promise.all([api.getPains(), api.getFormats(), api.getHooks(), api.getContexts(), api.getObjectives()])
+      .then(([p, f, h, c, o]) => {
         setPains(p);
         setFormats(f);
         setHooks(h);
         setContexts(c);
+        setObjectives(o);
         if (f.length > 0) setSelectedFormat(f[0].id);
       })
       .catch((e) => setError(e.message));
@@ -84,6 +96,7 @@ export default function Generator() {
         pain_id: selectedPain,
         format_id: selectedFormat,
         hook_id: isGuionVideo ? selectedHook : "",
+        objective_id: selectedObjective,
         extra_idea: extraIdea,
         variation,
         reference_context_ids: referenceIds,
@@ -225,6 +238,28 @@ export default function Generator() {
                   {p.description && (
                     <span className="option-card-desc">{p.description}</span>
                   )}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="card">
+            <div className="card-title">¿Qué quieres lograr?</div>
+            <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
+              Elige una sola cosa. El sistema acomoda solo la etapa del embudo, el nivel de
+              consciencia de la audiencia y el tipo de llamado a la acción.
+            </p>
+            <div className="option-grid">
+              {objectives.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  className={`option-card ${selectedObjective === o.id ? "selected" : ""}`}
+                  onClick={() => setSelectedObjective(o.id)}
+                  aria-pressed={selectedObjective === o.id}
+                >
+                  <span className="option-card-label">{o.label}</span>
+                  <span className="option-card-desc">{o.description}</span>
                 </button>
               ))}
             </div>
