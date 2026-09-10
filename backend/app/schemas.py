@@ -3,7 +3,28 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-InsightCategory = Literal["pain", "desire", "fear", "story"]
+InsightCategory = Literal[
+    "pain",
+    "desire",
+    "fear",
+    "story",
+    "objection",
+    "myth",
+    "mistake",
+    "question",
+    "opportunity",
+    "case",
+]
+
+PillarId = Literal[
+    "",
+    "problemas_invisibles",
+    "dinero",
+    "control",
+    "educacion",
+    "autoridad",
+    "marca_personal",
+]
 
 
 class LoginRequest(BaseModel):
@@ -60,6 +81,16 @@ class BusinessContextBase(BaseModel):
     value_proposition: str = Field(default="", max_length=5000)
     tone: str = Field(default="", max_length=255)
 
+    positioning: str = Field(default="", max_length=5000)
+    transformation_before: str = Field(default="", max_length=2000)
+    transformation_after: str = Field(default="", max_length=2000)
+    differentiators: str = Field(default="", max_length=5000)
+    emotional_promise: str = Field(default="", max_length=500)
+    brand_concept: str = Field(default="", max_length=500)
+    beliefs: str = Field(default="", max_length=5000)
+    avatar: str = Field(default="", max_length=5000)
+    anti_avatar: str = Field(default="", max_length=5000)
+
 
 class BusinessContextCreate(BusinessContextBase):
     pass
@@ -97,6 +128,7 @@ class PainPublic(BaseModel):
     label: str
     description: str
     category: InsightCategory
+    pillar: PillarId = ""
     position: int
 
 
@@ -104,12 +136,14 @@ class PainCreate(BaseModel):
     label: str = Field(min_length=2, max_length=255)
     description: str = Field(default="", max_length=2000)
     category: InsightCategory = "pain"
+    pillar: PillarId = ""
 
 
 class PainUpdate(BaseModel):
     label: str = Field(min_length=2, max_length=255)
     description: str = Field(default="", max_length=2000)
     category: InsightCategory = "pain"
+    pillar: PillarId = ""
     position: int | None = None
 
 
@@ -117,6 +151,22 @@ class SuggestedInsightItem(BaseModel):
     label: str
     description: str
     category: InsightCategory
+    pillar: PillarId = ""
+
+
+class PillarPublic(BaseModel):
+    id: str
+    label: str
+    description: str
+    topics: str
+
+
+class ObjectivePublic(BaseModel):
+    id: str
+    label: str
+    description: str
+    funnel: str
+    goal: str
 
 
 class ImportInsightsRequest(BaseModel):

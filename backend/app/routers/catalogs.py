@@ -3,7 +3,9 @@ from fastapi import APIRouter, Depends
 from app.deps import get_current_user_active
 from app.hooks import HOOK_TYPES
 from app.models import User
-from app.schemas import CatalogItem
+from app.objectives import OBJECTIVES
+from app.pillars import PILLARS
+from app.schemas import CatalogItem, ObjectivePublic, PillarPublic
 
 router = APIRouter(prefix="/api/catalogs", tags=["catalogs"])
 
@@ -43,6 +45,16 @@ def get_hooks(_: User = Depends(get_current_user_active)) -> list[CatalogItem]:
         CatalogItem(id=h["id"], label=h["label"], description=h["description"])
         for h in HOOK_TYPES
     ]
+
+
+@router.get("/pillars", response_model=list[PillarPublic])
+def get_pillars(_: User = Depends(get_current_user_active)) -> list[dict]:
+    return PILLARS
+
+
+@router.get("/objectives", response_model=list[ObjectivePublic])
+def get_objectives(_: User = Depends(get_current_user_active)) -> list[dict]:
+    return OBJECTIVES
 
 
 def get_format_by_id(format_id: str) -> CatalogItem | None:

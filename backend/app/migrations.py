@@ -89,6 +89,23 @@ def ensure_schema(engine: Engine, admin_email: str | None = None) -> None:
                 AND is_primary = FALSE
             """))
 
+            # Identidad de marca, creencias y audiencia (Fase 1)
+            for column, ddl_type in (
+                ("positioning", "TEXT"),
+                ("transformation_before", "TEXT"),
+                ("transformation_after", "TEXT"),
+                ("differentiators", "TEXT"),
+                ("emotional_promise", "VARCHAR(500)"),
+                ("brand_concept", "VARCHAR(500)"),
+                ("beliefs", "TEXT"),
+                ("avatar", "TEXT"),
+                ("anti_avatar", "TEXT"),
+            ):
+                conn.execute(text(
+                    f"ALTER TABLE business_contexts "
+                    f"ADD COLUMN IF NOT EXISTS {column} {ddl_type} NOT NULL DEFAULT ''"
+                ))
+
         pains_exists = conn.execute(
             text("SELECT to_regclass('public.customer_pains') IS NOT NULL")
         ).scalar()
@@ -100,6 +117,14 @@ def ensure_schema(engine: Engine, admin_email: str | None = None) -> None:
             conn.execute(text(
                 "CREATE INDEX IF NOT EXISTS ix_customer_pains_category "
                 "ON customer_pains (category)"
+            ))
+            conn.execute(text(
+                "ALTER TABLE customer_pains "
+                "ADD COLUMN IF NOT EXISTS pillar VARCHAR(32) NOT NULL DEFAULT ''"
+            ))
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_customer_pains_pillar "
+                "ON customer_pains (pillar)"
             ))
 
     logger.info("Migración de esquema aplicada.")

@@ -52,6 +52,21 @@ class BusinessContext(Base):
         nullable=False,
     )
 
+    # Identidad de marca (Nivel I de la Arquitectura Maestra)
+    positioning: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    transformation_before: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    transformation_after: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    differentiators: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    emotional_promise: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    brand_concept: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+
+    # Creencias que el contenido debe instalar, una por línea
+    beliefs: Mapped[str] = mapped_column(Text, default="", nullable=False)
+
+    # Audiencia
+    avatar: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    anti_avatar: Mapped[str] = mapped_column(Text, default="", nullable=False)
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -72,6 +87,7 @@ class CustomerPain(Base):
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     category: Mapped[str] = mapped_column(String(32), default="pain", nullable=False, index=True)
+    pillar: Mapped[str] = mapped_column(String(32), default="", nullable=False, index=True)
     position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

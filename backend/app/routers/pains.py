@@ -64,6 +64,7 @@ def import_insights(
             label=item.label.strip(),
             description=item.description.strip(),
             category=item.category,
+            pillar=item.pillar,
             position=position,
         )
         db.add(pain)
@@ -93,6 +94,7 @@ def create_pain(
         label=payload.label.strip(),
         description=payload.description.strip(),
         category=payload.category,
+        pillar=payload.pillar,
         position=count,
     )
     db.add(pain)
@@ -115,6 +117,7 @@ def update_pain(
     pain.label = payload.label.strip()
     pain.description = payload.description.strip()
     pain.category = payload.category
+    pain.pillar = payload.pillar
     if payload.position is not None:
         pain.position = payload.position
     db.commit()

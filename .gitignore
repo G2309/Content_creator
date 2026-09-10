@@ -19,3 +19,6 @@ dist/
 .vscode/
 
 *.log
+
+# Cotizaciones y documentos de cliente
+docs/
