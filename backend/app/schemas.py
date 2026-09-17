@@ -167,6 +167,14 @@ class ObjectivePublic(BaseModel):
     description: str
     funnel: str
     goal: str
+    metric: str
+
+
+class WidthPublic(BaseModel):
+    id: str
+    label: str
+    description: str
+    example: str
 
 
 class ImportInsightsRequest(BaseModel):
@@ -178,6 +186,7 @@ class GenerateRequest(BaseModel):
     format_id: str = Field(min_length=1, max_length=64)
     hook_id: str = Field(default="", max_length=64)
     objective_id: str = Field(default="", max_length=64)
+    width_id: str = Field(default="", max_length=64)
     extra_idea: str = Field(default="", max_length=2000)
     variation: bool = False
     reference_context_ids: list[int] = Field(default_factory=list, max_length=10)
@@ -194,6 +203,8 @@ class GenerateResponse(BaseModel):
     hook_label: str = ""
     objective_id: str = ""
     objective_label: str = ""
+    width_id: str = ""
+    width_label: str = ""
     pillar_id: str = ""
     pillar_label: str = ""
     model: str

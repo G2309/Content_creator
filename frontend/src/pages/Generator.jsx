@@ -25,12 +25,14 @@ export default function Generator() {
   const [formats, setFormats] = useState([]);
   const [hooks, setHooks] = useState([]);
   const [objectives, setObjectives] = useState([]);
+  const [widths, setWidths] = useState([]);
   const [contexts, setContexts] = useState([]);
 
   const [selectedPain, setSelectedPain] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState("");
   const [selectedHook, setSelectedHook] = useState("");
   const [selectedObjective, setSelectedObjective] = useState("");
+  const [selectedWidth, setSelectedWidth] = useState("");
   const [referenceIds, setReferenceIds] = useState([]);
   const [extraIdea, setExtraIdea] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -43,19 +45,21 @@ export default function Generator() {
   const [savedNotice, setSavedNotice] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.getPains(), api.getFormats(), api.getHooks(), api.getContexts(), api.getObjectives()])
-      .then(([p, f, h, c, o]) => {
+    Promise.all([api.getPains(), api.getFormats(), api.getHooks(), api.getContexts(), api.getObjectives(), api.getWidths()])
+      .then(([p, f, h, c, o, w]) => {
         setPains(p);
         setFormats(f);
         setHooks(h);
         setContexts(c);
         setObjectives(o);
+        setWidths(w);
         if (f.length > 0) setSelectedFormat(f[0].id);
       })
       .catch((e) => setError(e.message));
   }, []);
 
   const isGuionVideo = selectedFormat === "guion_video";
+  const needsWidth = ["descubrimiento", "seguidores"].includes(selectedObjective);
   const primaryContext = contexts.find((c) => c.is_primary);
   const otherContexts = contexts.filter((c) => !c.is_primary);
 
@@ -97,6 +101,7 @@ export default function Generator() {
         format_id: selectedFormat,
         hook_id: isGuionVideo ? selectedHook : "",
         objective_id: selectedObjective,
+        width_id: needsWidth ? selectedWidth : "",
         extra_idea: extraIdea,
         variation,
         reference_context_ids: referenceIds,
@@ -264,6 +269,33 @@ export default function Generator() {
               ))}
             </div>
           </section>
+
+          {needsWidth && (
+            <section className="card">
+              <div className="card-title">¿Para qué tan amplio?</div>
+              <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
+                Cuánto contexto previo puede asumir el contenido. Mientras más amplio, más gente
+                lo entiende sin conocer el servicio.
+              </p>
+              <div className="option-grid">
+                {widths.map((w) => (
+                  <button
+                    key={w.id}
+                    type="button"
+                    className={`option-card ${selectedWidth === w.id ? "selected" : ""}`}
+                    onClick={() => setSelectedWidth(w.id)}
+                    aria-pressed={selectedWidth === w.id}
+                  >
+                    <span className="option-card-label">{w.label}</span>
+                    <span className="option-card-desc">{w.description}</span>
+                    <span className="option-card-desc" style={{ fontStyle: "italic", marginTop: "0.25rem" }}>
+                      «{w.example}»
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="card">
             <div className="card-title">Formato</div>

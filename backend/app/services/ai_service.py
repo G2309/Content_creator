@@ -8,6 +8,7 @@ import anthropic
 
 from app.config import get_settings
 from app.models import BusinessContext
+from app.angles import angles_block
 from app.structures import structures_block
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,13 @@ GUION_VIDEO_INSTRUCTION = (
     "ARQUITECTURA OBLIGATORIA DEL REEL — marca cada sección con su nombre en MAYÚSCULAS.\n"
     "Las siete secciones van en este orden:\n\n"
     "INTERRUPCIÓN:\n"
-    "Una sola línea que rompa el scroll en menos de 3 segundos. Sigue ESTRICTAMENTE la "
-    "instrucción del tipo de gancho elegido. No es una introducción: es un golpe.\n\n"
+    "Aquí van TRES ganchos que trabajan juntos, cada uno etiquetado. No deben repetir lo mismo:\n"
+    "- Hook visual: qué se ve en el segundo 1. Un plano concreto y grabable, sin logo y sin saludo. "
+    "Es lo que rompe el scroll.\n"
+    "- Hook verbal: la línea que se dice. Abre curiosidad. Sigue ESTRICTAMENTE la instrucción del "
+    "tipo de gancho elegido.\n"
+    "- Hook textual: el texto sobreimpreso en pantalla. Da contexto, para que el reel funcione "
+    "sin sonido. Máximo ocho palabras.\n\n"
     "PROMESA:\n"
     "Una o dos líneas. La razón para quedarse. El espectador debe entender que si sigue viendo "
     "va a descubrir algo. Tipo: 'y aquí está el problema' o 'te voy a mostrar qué puede pasar'.\n\n"
@@ -48,7 +54,7 @@ GUION_VIDEO_INSTRUCTION = (
     "el inventario, la app, la bodega, un caso real, un testimonio. "
     "No digas 'tenemos control': enseña cómo se ve el control. "
     "Si no hay evidencia visual posible, usa un caso concreto y específico.\n\n"
-    "RESOLUCIÓN:\n"
+    "PAYOFF:\n"
     "El espectador sale con una comprensión nueva más una salida. Es el cambio de creencia "
     "hecho explícito, en dos o tres líneas.\n\n"
     "CTA:\n"
@@ -57,6 +63,74 @@ GUION_VIDEO_INSTRUCTION = (
     "RETENCIÓN: cada pocos segundos debe aparecer al menos uno de estos elementos — información "
     "nueva, una pregunta, un contraste, una consecuencia, una revelación o una promesa pendiente. "
     "Si un tramo del guion no tiene ninguno, reescríbelo."
+)
+
+
+EVIDENCE_HIERARCHY = (
+    "PRINCIPIO MOSTRAR ANTES QUE EXPLICAR:\n"
+    "Antes de explicar algo, pregúntate si puedes mostrarlo. Si se puede mostrar, se muestra.\n"
+    "Jerarquía de evidencia, de mejor a peor — usa siempre la más alta disponible:\n"
+    "1. Evidencia operativa real (la bodega, el proceso, una inspección en curso)\n"
+    "2. Un caso real con detalle específico\n"
+    "3. La plataforma, datos o fotografías\n"
+    "4. Experiencia propia narrada\n"
+    "5. Explicación\n"
+    "6. Recreación o imagen generada con IA\n"
+    "Nunca uses recreación con IA cuando exista evidencia real de los niveles 1 a 3."
+)
+
+
+PRODUCTION_PACKAGE = (
+    "Después del guion, agrega estas secciones. Son para producir el video, no para leerse en cámara.\n\n"
+    "MAPA DE RETENCIÓN:\n"
+    "Marca por tramos de segundos qué sostiene la atención en cada uno. "
+    "Ajusta los tramos a la duración real del guion. Ejemplo de formato:\n"
+    "0-2 s: interrupción | 2-5 s: promesa | 5-9 s: tensión | 9-14 s: información nueva | "
+    "14-19 s: evidencia | 19-23 s: payoff | 23-25 s: CTA\n\n"
+    "LISTA DE TOMAS:\n"
+    "Numera los planos necesarios, en orden. Para cada uno: qué se ve, desde qué ángulo y si "
+    "la cámara se mueve. Sé concreto y grabable con un celular.\n\n"
+    "B-ROLL:\n"
+    "Qué material de apoyo hace falta para cubrir cortes. Indica si alguna toma puede generarse "
+    "con IA, y di explícitamente cuáles NO deben generarse porque necesitan evidencia real.\n\n"
+    "ESCENARIO Y OBJETO DE APOYO:\n"
+    "Dónde se graba y qué objeto físico aparece en cámara.\n\n"
+    "DURACIÓN OBJETIVO:\n"
+    "Un rango en segundos.\n\n"
+    "PORTADA:\n"
+    "Qué imagen usar como portada y qué texto llevará encima. Debe entenderse el tema sin dar play.\n\n"
+    "CAPTION:\n"
+    "El texto de la publicación. Primera línea con gancho, cuerpo corto y CTA al final. "
+    "Agrega 5-8 hashtags relevantes en una sola línea.\n\n"
+    "PALABRA CLAVE:\n"
+    "Si el objetivo es conversión o leads, la palabra que la gente debe comentar o escribir. "
+    "Si el objetivo es alcance, seguidores o autoridad, escribe «no aplica».\n\n"
+    "FICHA:\n"
+    "Objetivo, funnel, nivel de consciencia elegido, anchura, pilar, ángulo usado, "
+    "estructura narrativa usada, creencia actual y creencia nueva.\n\n"
+    "REVISIÓN ANTES DE PUBLICAR:\n"
+    "Contesta honestamente, y si alguna sale mal, corrige el guion antes de entregarlo:\n"
+    "- ¿El hook se entiende sin sonido?\n"
+    "- ¿Hay una sola idea central?\n"
+    "- ¿Hay tensión y una razón para quedarse?\n"
+    "- ¿Estoy mostrando en vez de solo afirmar?\n"
+    "- ¿El CTA corresponde al objetivo y no a las ganas de vender?\n"
+    "- ¿El espectador sale con algo que antes no entendía?"
+)
+
+
+CONTENT_RULES = (
+    "REGLAS NO NEGOCIABLES:\n"
+    "- Una sola idea central por pieza.\n"
+    "- Cada pieza debe cambiar algo: lo que la persona ve, entiende, cree, siente o hace. "
+    "Si no cambia nada, no sirve.\n"
+    "- El hook no se aprueba por sonar fuerte: debe corresponder a la audiencia, la consciencia "
+    "y el objetivo indicados.\n"
+    "- Mostrar antes que explicar.\n"
+    "- No hagas afirmaciones sobre competidores que no se puedan demostrar. "
+    "Habla de prácticas comunes del sector, nunca de empresas con nombre.\n"
+    "- No convertir la pieza en publicidad. El CTA corresponde al objetivo, no a las ganas de vender.\n"
+    "- No agregues frases solo para llenar segundos. Si una frase se puede borrar sin perder nada, bórrala."
 )
 
 
@@ -290,6 +364,8 @@ def _build_user_prompt(
     variation: bool,
     objective: dict | None = None,
     pillar: dict | None = None,
+    width: dict | None = None,
+    angle_label: str = "",
 ) -> str:
     instruction = FORMAT_INSTRUCTIONS.get(
         format_id,
@@ -318,12 +394,17 @@ def _build_user_prompt(
         f"CÓMO USAR ESTE ÁNGULO: {framing}",
     ]
 
+    # --- A QUIÉN Y PARA QUÉ ---
     if objective:
         parts.extend([
             "",
             f"OBJETIVO DE ESTE CONTENIDO: {objective['label']}.",
             objective["instruction"],
+            f"Métrica con la que se juzgará: {objective['metric']}.",
         ])
+
+    if width:
+        parts.extend(["", width["instruction"]])
 
     if pillar:
         parts.extend([
@@ -332,10 +413,13 @@ def _build_user_prompt(
             pillar["instruction"],
         ])
 
+    # --- CÓMO CONTARLO ---
+    parts.extend(["", angles_block(angle_label)])
+
     parts.extend(["", f"FORMATO: {instruction}"])
 
     if format_id == "guion_video":
-        parts.extend(["", structures_block()])
+        parts.extend(["", structures_block(), "", EVIDENCE_HIERARCHY])
 
     if hook_instruction:
         parts.extend([
@@ -362,7 +446,12 @@ def _build_user_prompt(
             "una primera versión obvia. Cambia el hook, el enfoque, el ejemplo o la metáfora — "
             "pero mantén el tipo de gancho elegido y respeta la idea adicional del usuario si la hay.",
         ])
-    parts.extend(["", "Devuelve únicamente el texto final, sin encabezados ni notas."])
+    # --- QUÉ ENTREGAR ---
+    if format_id == "guion_video":
+        parts.extend(["", PRODUCTION_PACKAGE])
+
+    parts.extend(["", CONTENT_RULES])
+    parts.extend(["", "Devuelve únicamente el contenido final, sin comentarios sobre tu proceso."])
     return "\n".join(parts)
 
 
@@ -381,13 +470,15 @@ def generate_content(
     variation: bool = False,
     objective: dict | None = None,
     pillar: dict | None = None,
+    width: dict | None = None,
+    angle_label: str = "",
 ) -> tuple[str, str]:
     system = _build_system_prompt(business_context, reference_contexts)
     user_msg = _build_user_prompt(
         pain_label, pain_description, pain_category,
         format_id, format_label,
         hook_label, hook_instruction, extra_idea, variation,
-        objective=objective, pillar=pillar,
+        objective=objective, pillar=pillar, width=width, angle_label=angle_label,
     )
 
     kwargs: dict = {"system": system, "messages": [{"role": "user", "content": user_msg}]}

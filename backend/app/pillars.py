@@ -55,11 +55,15 @@ PILLARS = [
         "id": "marca_personal",
         "label": "Marca personal",
         "description": "Humanizar la autoridad y construir conexión.",
-        "topics": "experiencias, aprendizajes, opiniones, decisiones, errores, filosofía, día a día",
+        "topics": "autoridad personal, opinión, historia de fundador, conexión",
         "instruction": (
-            "Habla en primera persona desde una experiencia real. "
-            "Puede ser un error, una decisión difícil o una opinión con la que no todos "
-            "estarán de acuerdo. La conexión viene de la honestidad, no de la perfección."
+            "Habla en primera persona desde una experiencia real. Elige uno de estos cuatro "
+            "enfoques y decláralo en la ficha:\n"
+            "- Autoridad personal: 'después de trabajar con esto, aprendí…'\n"
+            "- Opinión: 'yo nunca elegiría un proveedor solo por…'\n"
+            "- Historia de fundador: 'cuando construimos esto decidimos…'\n"
+            "- Conexión: una decisión, un error o una situación real del día a día.\n"
+            "La conexión viene de la honestidad, no de la perfección."
         ),
     },
 ]

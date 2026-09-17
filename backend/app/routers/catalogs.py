@@ -5,7 +5,8 @@ from app.hooks import HOOK_TYPES
 from app.models import User
 from app.objectives import OBJECTIVES
 from app.pillars import PILLARS
-from app.schemas import CatalogItem, ObjectivePublic, PillarPublic
+from app.widths import AUDIENCE_WIDTHS
+from app.schemas import CatalogItem, ObjectivePublic, PillarPublic, WidthPublic
 
 router = APIRouter(prefix="/api/catalogs", tags=["catalogs"])
 
@@ -55,6 +56,11 @@ def get_pillars(_: User = Depends(get_current_user_active)) -> list[dict]:
 @router.get("/objectives", response_model=list[ObjectivePublic])
 def get_objectives(_: User = Depends(get_current_user_active)) -> list[dict]:
     return OBJECTIVES
+
+
+@router.get("/widths", response_model=list[WidthPublic])
+def get_widths(_: User = Depends(get_current_user_active)) -> list[dict]:
+    return AUDIENCE_WIDTHS
 
 
 def get_format_by_id(format_id: str) -> CatalogItem | None:

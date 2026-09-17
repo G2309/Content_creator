@@ -11,6 +11,7 @@ from app.hooks import get_hook_by_id
 from app.models import BusinessContext, CustomerPain, User
 from app.objectives import get_objective_by_id
 from app.pillars import get_pillar_by_id
+from app.widths import WIDTH_RELEVANT_OBJECTIVES, get_width_by_id
 from app.routers.catalogs import get_format_by_id
 from app.routers.context import get_primary_context
 from app.schemas import GenerateRequest, GenerateResponse
@@ -47,6 +48,15 @@ def generate(
         if not objective:
             raise HTTPException(status_code=400, detail="Objetivo no válido.")
 
+    # La anchura solo aplica a objetivos de descubrimiento y seguidores.
+    width = None
+    if payload.width_id:
+        width = get_width_by_id(payload.width_id)
+        if not width:
+            raise HTTPException(status_code=400, detail="Anchura no válida.")
+        if not objective or objective["id"] not in WIDTH_RELEVANT_OBJECTIVES:
+            width = None
+
     # El pilar viene del insight, no lo elige el usuario al generar.
     pillar = get_pillar_by_id(pain.pillar) if pain.pillar else None
 
@@ -80,6 +90,7 @@ def generate(
             variation=payload.variation,
             objective=objective,
             pillar=pillar,
+            width=width,
         )
     except anthropic.APITimeoutError:
         raise HTTPException(
@@ -121,6 +132,8 @@ def generate(
         hook_label=hook["label"] if hook else "",
         objective_id=objective["id"] if objective else "",
         objective_label=objective["label"] if objective else "",
+        width_id=width["id"] if width else "",
+        width_label=width["label"] if width else "",
         pillar_id=pillar["id"] if pillar else "",
         pillar_label=pillar["label"] if pillar else "",
         model=model_used,

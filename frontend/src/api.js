@@ -90,6 +90,7 @@ export const api = {
   getHooks: () => request("/api/catalogs/hooks"),
   getPillars: () => request("/api/catalogs/pillars"),
   getObjectives: () => request("/api/catalogs/objectives"),
+  getWidths: () => request("/api/catalogs/widths"),
 
   getContexts: () => request("/api/contexts"),
   getContext: (id) => request(`/api/contexts/${id}`),
