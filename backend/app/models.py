@@ -110,6 +110,27 @@ class SavedTemplate(Base):
     pain_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     format_id: Mapped[str] = mapped_column(String(64), default="", nullable=False)
     format_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+
+    # Ficha estratégica con la que se generó
+    objective_id: Mapped[str] = mapped_column(String(64), default="", nullable=False, index=True)
+    objective_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    pillar_id: Mapped[str] = mapped_column(String(64), default="", nullable=False, index=True)
+    pillar_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    hook_id: Mapped[str] = mapped_column(String(64), default="", nullable=False, index=True)
+    hook_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    width_id: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    angle_label: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+
+    # Resultados de Instagram Insights, capturados a mano tras publicar
+    views: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    retention_pct: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    follows: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    saves: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    comments: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    results_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

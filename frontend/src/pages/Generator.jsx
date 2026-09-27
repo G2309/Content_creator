@@ -37,8 +37,11 @@ export default function Generator() {
   const [extraIdea, setExtraIdea] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const [result, setResult] = useState(null);
+  const [variants, setVariants] = useState([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,6 +61,7 @@ export default function Generator() {
       .catch((e) => setError(e.message));
   }, []);
 
+  const result = variants[activeIdx] || null;
   const isGuionVideo = selectedFormat === "guion_video";
   const needsWidth = ["descubrimiento", "seguidores"].includes(selectedObjective);
   const primaryContext = contexts.find((c) => c.is_primary);
@@ -90,13 +94,21 @@ export default function Generator() {
     );
   };
 
+  useEffect(() => {
+    if (!loading) return undefined;
+    setElapsed(0);
+    const started = Date.now();
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [loading]);
+
   const run = async (variation) => {
     setError("");
     setLoading(true);
     setCopied(false);
     setSavedNotice(false);
     try {
-      const res = await api.generate({
+      const res = await api.generateVariants({
         pain_id: selectedPain,
         format_id: selectedFormat,
         hook_id: isGuionVideo ? selectedHook : "",
@@ -106,7 +118,9 @@ export default function Generator() {
         variation,
         reference_context_ids: referenceIds,
       });
-      setResult(res);
+      setVariants(res.variants);
+      setFailedCount(res.failed);
+      setActiveIdx(0);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -134,6 +148,10 @@ export default function Generator() {
         content: result.content,
         pain_id: result.pain_id,
         format_id: result.format_id,
+        objective_id: result.objective_id,
+        hook_id: result.hook_id,
+        width_id: result.width_id,
+        angle_label: result.angle_label,
       });
       setSavedNotice(true);
       setTimeout(() => setSavedNotice(false), 2500);
@@ -153,8 +171,8 @@ export default function Generator() {
         <div className="page-eyebrow">Paso 1 — Generar</div>
         <h1 className="page-title">Convierte una idea en un texto listo para publicar</h1>
         <p className="page-subtitle">
-          Elige un ángulo (dolor, deseo, miedo o historia), el formato y, si quieres, añade una idea.
-          La IA usa el contexto principal del negocio para generar el texto.
+          Elige una idea de tu banco, qué quieres lograr y el formato. Recibes tres versiones
+          con enfoques distintos para que escojas la mejor.
         </p>
       </header>
 
@@ -397,7 +415,7 @@ export default function Generator() {
             <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.5rem" }}>
               <button className="btn btn-primary" onClick={() => run(false)} disabled={!canGenerate}>
                 {loading ? <span className="spinner" /> : null}
-                {loading ? "Generando…" : "Generar texto"}
+                {loading ? "Generando…" : "Generar 3 versiones"}
               </button>
             </div>
             {isGuionVideo && !selectedHook && (
@@ -407,7 +425,8 @@ export default function Generator() {
             )}
             {isGuionVideo && (
               <p style={{ fontSize: "0.75rem", color: "var(--color-text-subtle)", marginTop: "0.5rem", fontStyle: "italic" }}>
-                Para guion de video se usa un modelo más potente (Sonnet) — tarda un poco más pero el resultado es notablemente mejor.
+                El guion completo incluye tomas, portada y caption. Las tres versiones se escriben al
+                mismo tiempo y tardan alrededor de un minuto.
               </p>
             )}
           </section>
@@ -424,12 +443,37 @@ export default function Generator() {
             {loading && (
               <div className="result-empty">
                 <span className="spinner" style={{ marginRight: "0.5rem" }} />
-                La IA está escribiendo…
+                Escribiendo tres versiones… {elapsed}s
+                {isGuionVideo && elapsed > 20 && (
+                  <div style={{ fontSize: "0.8125rem", marginTop: "0.5rem" }}>
+                    El guion completo tarda alrededor de un minuto. No cierres esta pestaña.
+                  </div>
+                )}
               </div>
             )}
 
             {result && !loading && (
               <>
+                <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+                  {variants.map((v, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`chip ${activeIdx === i ? "" : "chip-neutral"}`}
+                      onClick={() => { setActiveIdx(i); setSavedNotice(false); setCopied(false); }}
+                      aria-pressed={activeIdx === i}
+                      style={{ cursor: "pointer", border: "none", padding: "0.35rem 0.75rem" }}
+                    >
+                      Versión {i + 1}{v.angle_label ? ` · ${v.angle_label}` : ""}
+                    </button>
+                  ))}
+                </div>
+                {failedCount > 0 && (
+                  <div className="banner banner-info" style={{ marginBottom: "0.75rem" }}>
+                    {failedCount === 1 ? "Una versión no se pudo generar" : `${failedCount} versiones no se pudieron generar`}.
+                    Puedes regenerar para intentar de nuevo.
+                  </div>
+                )}
                 <div className="result-content">{result.content}</div>
                 {result.model && (
                   <div style={{ fontSize: "0.6875rem", color: "var(--color-text-subtle)", marginTop: "0.5rem", textAlign: "right", fontFamily: "var(--font-mono)" }}>
@@ -450,7 +494,7 @@ export default function Generator() {
                     {saving ? "Guardando…" : "Guardar en biblioteca"}
                   </button>
                   <button className="btn btn-ghost" onClick={() => run(true)} disabled={!canGenerate}>
-                    Regenerar
+                    Regenerar las tres
                   </button>
                 </div>
               </>

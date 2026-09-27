@@ -207,7 +207,13 @@ class GenerateResponse(BaseModel):
     width_label: str = ""
     pillar_id: str = ""
     pillar_label: str = ""
+    angle_label: str = ""
     model: str
+
+
+class GenerateVariantsResponse(BaseModel):
+    variants: list[GenerateResponse]
+    failed: int = 0
 
 
 class ScrapeRequest(BaseModel):
@@ -233,13 +239,25 @@ class ScrapeResponse(BaseModel):
 
 
 class SavedTemplateCreate(BaseModel):
-    content: str = Field(min_length=1, max_length=10000)
+    content: str = Field(min_length=1, max_length=40000)
     pain_id: int = Field(ge=1)
     format_id: str = Field(min_length=1, max_length=64)
+    objective_id: str = Field(default="", max_length=64)
+    hook_id: str = Field(default="", max_length=64)
+    width_id: str = Field(default="", max_length=64)
+    angle_label: str = Field(default="", max_length=255)
 
 
 class SavedTemplateUpdate(BaseModel):
-    content: str = Field(min_length=1, max_length=10000)
+    content: str = Field(min_length=1, max_length=40000)
+
+
+class TemplateResultsUpdate(BaseModel):
+    views: int | None = Field(default=None, ge=0)
+    retention_pct: int | None = Field(default=None, ge=0, le=100)
+    follows: int | None = Field(default=None, ge=0)
+    saves: int | None = Field(default=None, ge=0)
+    comments: int | None = Field(default=None, ge=0)
 
 
 class SavedTemplatePublic(BaseModel):
@@ -250,4 +268,44 @@ class SavedTemplatePublic(BaseModel):
     pain_label: str
     format_id: str
     format_label: str
+    objective_id: str = ""
+    objective_label: str = ""
+    pillar_id: str = ""
+    pillar_label: str = ""
+    hook_id: str = ""
+    hook_label: str = ""
+    width_id: str = ""
+    angle_label: str = ""
+    views: int | None = None
+    retention_pct: int | None = None
+    follows: int | None = None
+    saves: int | None = None
+    comments: int | None = None
+    results_updated_at: datetime | None = None
     created_at: datetime
+
+
+class InsightRow(BaseModel):
+    key: str
+    label: str
+    posts: int
+    avg_follows: float
+    avg_views: float
+    avg_retention: float | None
+
+
+class FunnelBalance(BaseModel):
+    window_days: int
+    counts: dict[str, int]
+    target_pct: dict[str, int]
+    actual_pct: dict[str, int]
+    message: str
+
+
+class LibraryInsights(BaseModel):
+    posts_with_results: int
+    min_posts: int
+    by_hook: list[InsightRow]
+    by_pillar: list[InsightRow]
+    by_objective: list[InsightRow]
+    balance: FunnelBalance

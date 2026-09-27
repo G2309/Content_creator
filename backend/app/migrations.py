@@ -127,6 +127,35 @@ def ensure_schema(engine: Engine, admin_email: str | None = None) -> None:
                 "ON customer_pains (pillar)"
             ))
 
+        templates_exists = conn.execute(
+            text("SELECT to_regclass('public.saved_templates') IS NOT NULL")
+        ).scalar()
+        if templates_exists:
+            for column, ddl in (
+                ("objective_id", "VARCHAR(64) NOT NULL DEFAULT ''"),
+                ("objective_label", "VARCHAR(255) NOT NULL DEFAULT ''"),
+                ("pillar_id", "VARCHAR(64) NOT NULL DEFAULT ''"),
+                ("pillar_label", "VARCHAR(255) NOT NULL DEFAULT ''"),
+                ("hook_id", "VARCHAR(64) NOT NULL DEFAULT ''"),
+                ("hook_label", "VARCHAR(255) NOT NULL DEFAULT ''"),
+                ("width_id", "VARCHAR(64) NOT NULL DEFAULT ''"),
+                ("angle_label", "VARCHAR(255) NOT NULL DEFAULT ''"),
+                ("views", "INTEGER"),
+                ("retention_pct", "INTEGER"),
+                ("follows", "INTEGER"),
+                ("saves", "INTEGER"),
+                ("comments", "INTEGER"),
+                ("results_updated_at", "TIMESTAMPTZ"),
+            ):
+                conn.execute(text(
+                    f"ALTER TABLE saved_templates ADD COLUMN IF NOT EXISTS {column} {ddl}"
+                ))
+            for column in ("objective_id", "pillar_id", "hook_id"):
+                conn.execute(text(
+                    f"CREATE INDEX IF NOT EXISTS ix_saved_templates_{column} "
+                    f"ON saved_templates ({column})"
+                ))
+
     logger.info("Migración de esquema aplicada.")
 
 

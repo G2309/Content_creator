@@ -103,6 +103,8 @@ export const api = {
   deleteContext: (id) =>
     request(`/api/contexts/${id}`, { method: "DELETE" }),
 
+  generateVariants: (payload) =>
+    request("/api/content/generate-variants", { method: "POST", body: payload }),
   generate: (payload) =>
     request("/api/content/generate", { method: "POST", body: payload }),
 
@@ -110,6 +112,9 @@ export const api = {
     request("/api/scraper/extract", { method: "POST", body: { url } }),
 
   listTemplates: () => request("/api/library"),
+  getLibraryInsights: () => request("/api/library/insights"),
+  updateTemplateResults: (id, results) =>
+    request(`/api/library/${id}/results`, { method: "PUT", body: results }),
   saveTemplate: (payload) =>
     request("/api/library", { method: "POST", body: payload }),
   updateTemplate: (id, content) =>

@@ -366,6 +366,7 @@ def _build_user_prompt(
     pillar: dict | None = None,
     width: dict | None = None,
     angle_label: str = "",
+    learnings: str = "",
 ) -> str:
     instruction = FORMAT_INSTRUCTIONS.get(
         format_id,
@@ -420,6 +421,8 @@ def _build_user_prompt(
 
     if format_id == "guion_video":
         parts.extend(["", structures_block(), "", EVIDENCE_HIERARCHY])
+        if learnings:
+            parts.extend(["", learnings])
 
     if hook_instruction:
         parts.extend([
@@ -472,6 +475,7 @@ def generate_content(
     pillar: dict | None = None,
     width: dict | None = None,
     angle_label: str = "",
+    learnings: str = "",
 ) -> tuple[str, str]:
     system = _build_system_prompt(business_context, reference_contexts)
     user_msg = _build_user_prompt(
@@ -479,6 +483,7 @@ def generate_content(
         format_id, format_label,
         hook_label, hook_instruction, extra_idea, variation,
         objective=objective, pillar=pillar, width=width, angle_label=angle_label,
+        learnings=learnings,
     )
 
     kwargs: dict = {"system": system, "messages": [{"role": "user", "content": user_msg}]}
