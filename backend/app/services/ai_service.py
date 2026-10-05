@@ -522,7 +522,7 @@ def generate_content(
     # La variedad entre versiones sale del ángulo distinto de cada una y del flag
     # `variation` en el prompt, no de temperature: el SDK 1.x ya no la acepta.
     if format_id == "guion_video":
-        # Sonnet 5 razona antes de escribir; max_tokens cubre razonamiento + texto.
+        # Sonnet 5.5 razona antes de escribir; max_tokens cubre razonamiento + texto.
         kwargs["model"] = settings.anthropic_model_guion
         kwargs["max_tokens"] = settings.anthropic_max_tokens_guion
         kwargs["thinking"] = {"type": "adaptive"}
