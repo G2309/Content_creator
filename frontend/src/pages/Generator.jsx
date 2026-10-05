@@ -20,6 +20,15 @@ const CATEGORY_ORDER = [
   "objection", "myth", "mistake", "question", "opportunity", "case",
 ];
 
+const DURATION_PRESETS = [15, 30, 60, 90, 180];
+
+function formatDuration(seconds) {
+  if (seconds < 60) return `${seconds} s`;
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  return sec ? `${min} min ${sec} s` : `${min} min`;
+}
+
 export default function Generator() {
   const [pains, setPains] = useState([]);
   const [formats, setFormats] = useState([]);
@@ -33,6 +42,7 @@ export default function Generator() {
   const [selectedHook, setSelectedHook] = useState("");
   const [selectedObjective, setSelectedObjective] = useState("");
   const [selectedWidth, setSelectedWidth] = useState("");
+  const [duration, setDuration] = useState(30);
   const [referenceIds, setReferenceIds] = useState([]);
   const [extraIdea, setExtraIdea] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -114,6 +124,7 @@ export default function Generator() {
         hook_id: isGuionVideo ? selectedHook : "",
         objective_id: selectedObjective,
         width_id: needsWidth ? selectedWidth : "",
+        duration_seconds: duration,
         extra_idea: extraIdea,
         variation,
         reference_context_ids: referenceIds,
@@ -334,6 +345,45 @@ export default function Generator() {
               ))}
             </div>
           </section>
+
+          {isGuionVideo && (
+            <section className="card">
+              <div className="card-title">Duración del video</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                <strong style={{ fontSize: "1.5rem" }}>{formatDuration(duration)}</strong>
+                <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
+                  ≈ {Math.round(duration * 2.5)} palabras habladas
+                </span>
+              </div>
+              <input
+                type="range"
+                min={15}
+                max={180}
+                step={5}
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                aria-label="Duración del video en segundos"
+                style={{ width: "100%" }}
+              />
+              <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+                {DURATION_PRESETS.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    className={`chip ${duration === d ? "" : "chip-neutral"}`}
+                    onClick={() => setDuration(d)}
+                    aria-pressed={duration === d}
+                    style={{ cursor: "pointer", border: "none", padding: "0.35rem 0.75rem" }}
+                  >
+                    {formatDuration(d)}
+                  </button>
+                ))}
+              </div>
+              <span className="field-hint" style={{ display: "block", marginTop: "0.5rem" }}>
+                Los reels cortos (15–30 s) suelen retener mejor. Los largos sirven para explicar o contar un caso.
+              </span>
+            </section>
+          )}
 
           {isGuionVideo && (
             <section className="card">

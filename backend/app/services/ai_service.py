@@ -21,8 +21,8 @@ _client = anthropic.Anthropic(
 
 
 GUION_VIDEO_INSTRUCTION = (
-    "Genera un GUION para Reel o video corto de Instagram. Duración objetivo: 1 a 3 minutos "
-    "hablados (entre 200 y 450 palabras). Si te queda menos de 200, sigue desarrollando.\n\n"
+    "Genera un GUION para Reel o video corto de Instagram. La duración la fija el bloque "
+    "DURACIÓN de abajo y manda sobre cualquier otra indicación de largo.\n\n"
     "REGLAS DE PACING (Instagram premia la rapidez emocional):\n"
     "- Frases CORTAS, ritmo Reel. Sin párrafos largos ni subordinadas. Una idea por línea.\n"
     "- Cada frase debe hacer avanzar el guion. Si una frase se puede borrar sin perder nada, bórrala.\n"
@@ -96,7 +96,7 @@ PRODUCTION_PACKAGE = (
     "ESCENARIO Y OBJETO DE APOYO:\n"
     "Dónde se graba y qué objeto físico aparece en cámara.\n\n"
     "DURACIÓN OBJETIVO:\n"
-    "Un rango en segundos.\n\n"
+    "La duración elegida en segundos, y cuántas palabras habladas tiene el guion.\n\n"
     "PORTADA:\n"
     "Qué imagen usar como portada y qué texto llevará encima. Debe entenderse el tema sin dar play.\n\n"
     "CAPTION:\n"
@@ -352,6 +352,34 @@ def _build_system_prompt(
     return "\n".join(parts)
 
 
+# Ritmo de habla de un reel en español: unas 2.5 palabras por segundo.
+WORDS_PER_SECOND = 2.5
+
+
+def _duration_block(seconds: int) -> str:
+    words = round(seconds * WORDS_PER_SECOND)
+    low, high = round(words * 0.9), round(words * 1.1)
+    lines = [
+        f"DURACIÓN: {seconds} segundos hablados. El guion (solo lo que se dice en cámara, sin "
+        f"contar tomas ni producción) debe tener entre {low} y {high} palabras. "
+        "Cuenta antes de entregar y ajusta: un guion más largo se corta en edición y uno más "
+        "corto deja huecos.",
+    ]
+    if seconds <= 30:
+        lines.append(
+            "Es un video CORTO. Mantén las siete secciones, pero cada una es una sola línea; "
+            "PROMESA y TENSIÓN pueden ser una frase cada una. El DESARROLLO es una idea en dos "
+            "o tres frases. No hay espacio para contexto: todo lo que no empuje, se va."
+        )
+    elif seconds >= 90:
+        lines.append(
+            "Es un video LARGO. El riesgo es que se caiga la atención a la mitad: mete un nuevo "
+            "giro, dato o pregunta al menos cada 10 segundos dentro del DESARROLLO."
+        )
+    lines.append(f"Ajusta el MAPA DE RETENCIÓN a {seconds} segundos.")
+    return "\n".join(lines)
+
+
 def _build_user_prompt(
     pain_label: str,
     pain_description: str,
@@ -367,6 +395,7 @@ def _build_user_prompt(
     width: dict | None = None,
     angle_label: str = "",
     learnings: str = "",
+    duration_seconds: int = 60,
 ) -> str:
     instruction = FORMAT_INSTRUCTIONS.get(
         format_id,
@@ -420,6 +449,7 @@ def _build_user_prompt(
     parts.extend(["", f"FORMATO: {instruction}"])
 
     if format_id == "guion_video":
+        parts.extend(["", _duration_block(duration_seconds)])
         parts.extend(["", structures_block(), "", EVIDENCE_HIERARCHY])
         if learnings:
             parts.extend(["", learnings])
@@ -476,6 +506,7 @@ def generate_content(
     width: dict | None = None,
     angle_label: str = "",
     learnings: str = "",
+    duration_seconds: int = 60,
 ) -> tuple[str, str]:
     system = _build_system_prompt(business_context, reference_contexts)
     user_msg = _build_user_prompt(
@@ -483,15 +514,15 @@ def generate_content(
         format_id, format_label,
         hook_label, hook_instruction, extra_idea, variation,
         objective=objective, pillar=pillar, width=width, angle_label=angle_label,
-        learnings=learnings,
+        learnings=learnings, duration_seconds=duration_seconds,
     )
 
     kwargs: dict = {"system": system, "messages": [{"role": "user", "content": user_msg}]}
 
+    # La variedad entre versiones sale del ángulo distinto de cada una y del flag
+    # `variation` en el prompt, no de temperature: el SDK 1.x ya no la acepta.
     if format_id == "guion_video":
-        # Sonnet 5: razona antes de escribir. Rechaza temperature con 400, así que
-        # la variedad entre versiones se pide por prompt (flag `variation`).
-        # max_tokens cubre razonamiento + texto, por eso es holgado.
+        # Sonnet 5 razona antes de escribir; max_tokens cubre razonamiento + texto.
         kwargs["model"] = settings.anthropic_model_guion
         kwargs["max_tokens"] = settings.anthropic_max_tokens_guion
         kwargs["thinking"] = {"type": "adaptive"}
@@ -499,7 +530,6 @@ def generate_content(
         # Haiku 4.5 para formatos cortos: no soporta thinking adaptativo.
         kwargs["model"] = settings.anthropic_model
         kwargs["max_tokens"] = settings.anthropic_max_tokens
-        kwargs["temperature"] = 1.0 if variation else 0.85
 
     try:
         response = _client.messages.create(**kwargs)
@@ -545,7 +575,9 @@ def extract_business_context(scraped_text: str, source_url: str) -> dict:
     response = _client.messages.create(
         model=settings.anthropic_model,
         max_tokens=2048,
-        temperature=0.2,
+        # Extracción de JSON: temperatura baja para que sea estable. El SDK 1.x ya no
+        # la expone como argumento, pero Haiku 4.5 la sigue aceptando en el cuerpo.
+        extra_body={"temperature": 0.2},
         system=CONTEXT_EXTRACTION_SYSTEM,
         messages=[{"role": "user", "content": user_msg}],
     )

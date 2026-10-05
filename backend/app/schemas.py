@@ -187,6 +187,7 @@ class GenerateRequest(BaseModel):
     hook_id: str = Field(default="", max_length=64)
     objective_id: str = Field(default="", max_length=64)
     width_id: str = Field(default="", max_length=64)
+    duration_seconds: int = Field(default=60, ge=15, le=180)
     extra_idea: str = Field(default="", max_length=2000)
     variation: bool = False
     reference_context_ids: list[int] = Field(default_factory=list, max_length=10)

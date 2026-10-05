@@ -120,6 +120,7 @@ def _run(plan: _Plan, payload: GenerateRequest, angle_label: str, variation: boo
         width=plan.width,
         angle_label=angle_label,
         learnings=plan.learnings,
+        duration_seconds=payload.duration_seconds,
     )
     if not content:
         raise ValueError("respuesta vacía")
@@ -166,7 +167,7 @@ def _http_error(exc: Exception) -> HTTPException:
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="La IA devolvió una respuesta vacía. Intenta de nuevo.",
         )
-    logger.exception("Error de la API de IA: %s", exc)
+    logger.error("Error al generar contenido: %r", exc, exc_info=exc)
     return HTTPException(
         status_code=status.HTTP_502_BAD_GATEWAY,
         detail="No fue posible generar el contenido en este momento.",
@@ -182,7 +183,7 @@ def generate(
     plan = _build_plan(payload, db, current_user)
     try:
         return _run(plan, payload, angle_label="", variation=payload.variation)
-    except (anthropic.APIError, ValueError) as exc:
+    except Exception as exc:
         raise _http_error(exc)
 
 
@@ -208,7 +209,7 @@ def generate_variants(
     for future in futures:
         try:
             variants.append(future.result())
-        except (anthropic.APIError, ValueError) as exc:
+        except Exception as exc:
             errors.append(exc)
 
     if not variants:

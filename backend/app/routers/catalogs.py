@@ -15,7 +15,7 @@ FORMATS: list[CatalogItem] = [
     CatalogItem(
         id="guion_video",
         label="Guion para video de Instagram",
-        description="Hook + problema + enseñanza + solución + CTA. Para Reels y videos largos (1 a 3 minutos).",
+        description="Guion completo con ganchos, tomas, portada y caption. Tú eliges la duración.",
     ),
     CatalogItem(
         id="caption_post",
